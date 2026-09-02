@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>봉주르후르츠 내 주문 확인</title>
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="봉주르후르츠" />
+<meta property="og:title" content="내 주문 확인 - 봉주르후르츠" />
+<meta property="og:description" content="이름을 검색하면 내 예약 내역과 수령 상태를 바로 확인할 수 있어요" />
+
+<!-- 홈 화면에 추가했을 때 진짜 앱처럼 보이도록 -->
+<link rel="manifest" href="/my-order.webmanifest" />
+<meta name="theme-color" content="#F2F2F7" />
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="내 주문" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
+<style>
+*{box-sizing:border-box;}
+body{
+  margin:0;background:#F2F2F7;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Pretendard Variable",Pretendard,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;color:#1C1C1E;-webkit-tap-highlight-color:transparent;
+}
+a{color:#007AFF;text-decoration:none;}
+a:hover{color:#0069DB;}
+input{font-family:inherit;}
+input::placeholder{color:#8E8E93;}
+@keyframes bjspin{to{transform:rotate(360deg);}}
+@keyframes bjpulse{0%,100%{opacity:.45;}50%{opacity:.9;}}
+
+.shell{min-height:100vh;display:flex;justify-content:center;background:#F2F2F7;}
+.page{width:100%;max-width:430px;min-height:100vh;padding:0 16px 44px;background:#F2F2F7;}
+
+header{padding:30px 4px 18px;display:flex;flex-direction:column;gap:6px;}
+.brand{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;letter-spacing:-.01em;color:#8E8E93;}
+h1{margin:0;font-size:34px;line-height:1.1;letter-spacing:-.028em;font-weight:700;color:#000;}
+.subcopy{margin:4px 0 0;font-size:14px;line-height:1.4;letter-spacing:-.012em;color:#8E8E93;font-weight:400;}
+
+.install-banner{
+  align-items:center;gap:12px;padding:13px 14px;margin-bottom:14px;border-radius:16px;background:#fff;
+  box-shadow:0 1px 2px rgba(0,0,0,.05), 0 6px 16px -10px rgba(0,0,0,.12);
+}
+.install-icon{font-size:24px;flex:none;}
+.install-text{flex:1;min-width:0;}
+.install-title{font-size:13.5px;font-weight:600;letter-spacing:-.01em;color:#1C1C1E;}
+.install-body{margin-top:2px;font-size:12px;line-height:1.5;letter-spacing:-.005em;color:#8E8E93;}
+.install-body b{color:#3A3A3C;font-weight:600;}
+.install-action{
+  flex:none;border:none;background:#007AFF;color:#fff;font-size:13px;font-weight:600;
+  padding:8px 14px;border-radius:999px;cursor:pointer;font-family:inherit;
+}
+.install-action:active{background:#0069DB;}
+.install-close{
+  flex:none;border:none;background:transparent;color:#C7C7CC;font-size:14px;
+  width:24px;height:24px;border-radius:50%;cursor:pointer;
+}
+.install-close:active{background:#F2F2F7;}
+
+.search-card{
+  padding:16px;border-radius:18px;background:#fff;
+  box-shadow:0 1px 2px rgba(0,0,0,.05), 0 6px 16px -10px rgba(0,0,0,.12);
+}
+.search-label{display:block;font-size:13px;font-weight:600;letter-spacing:-.008em;color:#007AFF;}
+.input-wrap{position:relative;margin-top:10px;}
+.input-wrap input{
+  width:100%;padding:12px 40px 12px 14px;font-size:17px;font-weight:400;letter-spacing:-.02em;
+  color:#000;background:#F2F2F7;border:1px solid transparent;border-radius:12px;outline:none;
+  transition:background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.input-wrap input:focus{
+  background:#fff;border:1px solid #007AFF;box-shadow:0 0 0 3.5px rgba(0,122,255,.16);
+}
+.spinner-slot{position:absolute;right:13px;top:50%;transform:translateY(-50%);display:flex;align-items:center;}
+.spinner{
+  width:14px;height:14px;border-radius:50%;border:2px solid rgba(0,122,255,.22);
+  border-top-color:#007AFF;animation:bjspin .7s linear infinite;display:none;
+}
+.spinner.on{display:block;}
+.hints{margin-top:12px;display:flex;flex-direction:column;gap:5px;}
+.hints p{margin:0;font-size:12.5px;line-height:1.45;letter-spacing:-.008em;color:#8E8E93;}
+
+/* idle / empty 공통 */
+.state-center{margin-top:44px;padding:0 24px;text-align:center;}
+.state-center .big-emoji{font-size:30px;}
+.state-center .state-title{margin:14px 0 0;font-size:16px;font-weight:600;letter-spacing:-.02em;color:#3A3A3C;}
+.state-center .state-body{margin:5px 0 0;font-size:13.5px;line-height:1.5;letter-spacing:-.008em;color:#8E8E93;}
+.empty-icon{
+  width:52px;height:52px;margin:0 auto;border-radius:50%;background:rgba(255,59,48,.10);
+  display:flex;align-items:center;justify-content:center;font-size:22px;color:#FF3B30;
+}
+
+/* loading skeleton */
+.skeleton-wrap{margin-top:28px;display:flex;flex-direction:column;gap:14px;}
+.sk-title{height:14px;width:96px;border-radius:7px;background:rgba(60,60,67,.12);animation:bjpulse 1.2s ease-in-out infinite;margin-left:4px;}
+.sk-card{border-radius:16px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05);padding:16px;display:flex;flex-direction:column;gap:12px;}
+.sk-bar{height:13px;border-radius:6px;animation:bjpulse 1.2s ease-in-out infinite;}
+.sk-bar.b1{width:62%;background:rgba(60,60,67,.10);animation-delay:.1s;}
+.sk-bar.b2{width:44%;background:rgba(60,60,67,.08);animation-delay:.22s;}
+.sk-bar.b3{width:54%;background:rgba(60,60,67,.06);animation-delay:.34s;}
+
+/* results */
+.results-wrap{margin-top:26px;}
+.summary-row{display:flex;align-items:baseline;justify-content:space-between;padding:0 4px 2px;}
+.summary-row .left{font-size:12px;font-weight:600;letter-spacing:.02em;color:#8E8E93;}
+.summary-row .right{font-size:12px;font-weight:500;letter-spacing:-.005em;color:#8E8E93;}
+
+.date-section{padding-top:22px;}
+.date-header{
+  position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:8px 4px;
+  background:rgba(242,242,247,.86);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+}
+.date-header .d{font-size:22px;font-weight:700;letter-spacing:-.028em;font-variant-numeric:tabular-nums;color:#1C1C1E;}
+.date-header .d.today{color:#007AFF;}
+.date-header .wd{font-size:13.5px;font-weight:500;letter-spacing:-.01em;color:#8E8E93;}
+.today-tag{padding:2.5px 9px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:-.005em;color:#fff;background:#007AFF;}
+.date-header .spacer{flex:1;}
+.date-header .cnt{font-size:12px;font-weight:500;color:#AEAEB2;}
+
+.group-card{
+  margin-top:2px;border-radius:16px;background:#fff;overflow:hidden;
+  box-shadow:0 1px 2px rgba(0,0,0,.05), 0 8px 18px -14px rgba(0,0,0,.18);
+}
+.item-row{padding:15px 16px;}
+.item-row + .item-row{border-top:1px solid rgba(60,60,67,.10);}
+.item-top{display:flex;align-items:flex-start;gap:12px;}
+.item-left{flex:1;min-width:0;}
+.item-meta{font-size:12px;font-weight:500;letter-spacing:-.005em;color:#8E8E93;}
+.item-product-row{margin-top:3px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+.item-product{font-size:16px;font-weight:600;letter-spacing:-.022em;line-height:1.3;color:#000;}
+.item-qty{font-size:13.5px;font-weight:500;letter-spacing:-.01em;color:#8E8E93;font-variant-numeric:tabular-nums;}
+
+.badge{
+  flex:none;display:inline-flex;align-items:center;gap:4px;padding:4px 9px 4px 7px;
+  border-radius:999px;font-size:12px;font-weight:600;letter-spacing:-.008em;white-space:nowrap;
+}
+.badge .icon{line-height:1;display:inline-block;}
+.badge.done{color:#248A3D;background:rgba(52,199,89,.14);}
+.badge.pending{color:#B25000;background:rgba(255,149,0,.16);}
+.badge.noshow{color:#C9261C;background:rgba(255,59,48,.13);}
+.badge.delay{color:#0060DF;background:rgba(0,122,255,.13);}
+
+.item-note{
+  margin-top:11px;padding-top:10px;border-top:1px solid rgba(60,60,67,.10);
+  display:flex;gap:6px;font-size:12.5px;line-height:1.45;letter-spacing:-.008em;
+}
+
+footer{margin-top:36px;}
+.footnote{margin:14px 4px 0;font-size:11.5px;line-height:1.5;letter-spacing:-.005em;color:#AEAEB2;}
+</style>
+</head>
+<body>
+<div class="shell">
+<div class="page">
+
+  <header>
+    <div class="brand"><span>🍑</span><span>봉주르후르츠</span></div>
+    <h1>내 주문 확인</h1>
+    <p class="subcopy">이름만 입력하면 오늘부터 7일 뒤까지의 예약을 확인할 수 있어요.</p>
+  </header>
+
+  <div id="installBanner" class="install-banner" style="display:none;">
+    <div class="install-icon">🍑</div>
+    <div class="install-text">
+      <div class="install-title">홈 화면에 추가하기</div>
+      <div class="install-body" id="installBody"></div>
+    </div>
+    <button class="install-action" id="installActionBtn" style="display:none;">설치</button>
+    <button class="install-close" id="installCloseBtn" aria-label="닫기">✕</button>
+  </div>
+
+  <section class="search-card">
+    <label for="searchInput" class="search-label">🔎 이름으로 검색하세요</label>
+    <div class="input-wrap">
+      <input id="searchInput" type="text" autocomplete="off" placeholder="이름으로 검색 (ㄱ, 가, 감, 1561)" />
+      <span class="spinner-slot"><span class="spinner" id="spinner"></span></span>
+    </div>
+    <div class="hints">
+      <p>이름을 다 안 써도 돼요 — 초성이나 전화번호 뒷자리로도 찾을 수 있어요</p>
+      <p>오늘부터 7일 뒤까지의 예약만 나와요</p>
+    </div>
+  </section>
+
+  <div id="resultArea"></div>
+
+  <footer>
+    <p class="footnote">수령 상태는 매장에서 실시간으로 반영돼요.</p>
+  </footer>
+
+</div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function fmtMD(dateStr){
+  const parts = (dateStr||'').split('-');
+  return parts.length===3 ? `${Number(parts[1])}/${Number(parts[2])}` : dateStr;
+}
+const WD = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+function fmtWeekday(dateStr){
+  const parts = (dateStr||'').split('-').map(Number);
+  if(parts.length!==3) return '';
+  const d = new Date(parts[0], parts[1]-1, parts[2]);
+  return WD[d.getDay()];
+}
+
+// 서버 status(picked/none/noshow/postponed) -> 디자인 상태(done/pending/noshow/delay)
+const STATUS_MAP = { picked:'done', none:'pending', noshow:'noshow', postponed:'delay' };
+const STATUS = {
+  done:    { label:'수령완료', icon:'✓', iconSize:'11px' },
+  pending: { label:'미수령',   icon:'●', iconSize:'8px'  },
+  noshow:  { label:'노쇼',     icon:'✕', iconSize:'11px' },
+  delay:   { label:'연기',     icon:'↻', iconSize:'11px' },
+};
+
+function badgeHtml(rawStatus){
+  const key = STATUS_MAP[rawStatus] || 'pending';
+  const s = STATUS[key];
+  return `<span class="badge ${key}"><span class="icon" style="font-size:${s.iconSize}">${s.icon}</span>${s.label}</span>`;
+}
+
+function noteHtml(r){
+  if(r.status === 'postponed' && r.postponedTo){
+    return `<div class="item-note" style="color:#0060DF;"><span>🕒</span><span>${fmtMD(r.postponedTo)}로 연기됐어요</span></div>`;
+  }
+  if(r.fromPostpone){
+    return `<div class="item-note" style="color:#0060DF;"><span>🕒</span><span>${fmtMD(r.fromPostpone)}에서 연기되어 왔어요</span></div>`;
+  }
+  if(r.comments && r.comments.length){
+    const text = r.comments.map(c=>c.text).join(' · ');
+    return `<div class="item-note" style="color:#6C6C70;"><span>💬</span><span>${text}</span></div>`;
+  }
+  return '';
+}
+
+function renderIdle(){
+  $('#resultArea').innerHTML = `
+    <div class="state-center">
+      <div class="big-emoji">🍑</div>
+      <p class="state-title">이름을 입력해 주세요</p>
+      <p class="state-body">검색하면 날짜별 예약 내역이 바로 나타나요.</p>
+    </div>`;
+}
+
+function renderLoading(){
+  $('#resultArea').innerHTML = `
+    <div class="skeleton-wrap">
+      <div class="sk-title"></div>
+      <div class="sk-card">
+        <div class="sk-bar b1"></div>
+        <div class="sk-bar b2"></div>
+        <div class="sk-bar b3"></div>
+      </div>
+    </div>`;
+}
+
+function renderEmpty(query){
+  $('#resultArea').innerHTML = `
+    <div class="state-center">
+      <div class="empty-icon">🧐</div>
+      <p class="state-title">'${query}' 예약을 찾지 못했어요</p>
+      <p class="state-body">초성(ㄱ)이나 전화번호 뒷자리로 다시 검색해 보세요. 7일 이후 예약은 표시되지 않아요.</p>
+    </div>`;
+}
+
+function renderResults(results){
+  const today = todayStr();
+  const groups = {};
+  const order = [];
+  results.forEach(r=>{
+    if(!groups[r.date]){ groups[r.date] = []; order.push(r.date); }
+    groups[r.date].push(r);
+  });
+  order.sort();
+
+  const groupsHtml = order.map(date=>{
+    const items = groups[date];
+    const isToday = date === today;
+    const rows = items.map(r=>{
+      const meta = r.phone4 ? `${r.name} · ${r.phone4}` : r.name;
+      return `
+      <div class="item-row">
+        <div class="item-top">
+          <div class="item-left">
+            <div class="item-meta">${meta}</div>
+            <div class="item-product-row">
+              <span class="item-product">${r.product}</span>
+              <span class="item-qty">${r.qty}개</span>
+            </div>
+          </div>
+          ${badgeHtml(r.status)}
+        </div>
+        ${noteHtml(r)}
+      </div>`;
+    }).join('');
+
+    return `
+    <section class="date-section">
+      <div class="date-header">
+        <span class="d${isToday?' today':''}">${fmtMD(date)}</span>
+        <span class="wd">${fmtWeekday(date)}</span>
+        ${isToday ? '<span class="today-tag">오늘</span>' : ''}
+        <span class="spacer"></span>
+        <span class="cnt">${items.length}건</span>
+      </div>
+      <div class="group-card">${rows}</div>
+    </section>`;
+  }).join('');
+
+  $('#resultArea').innerHTML = `
+    <div class="results-wrap">
+      <div class="summary-row">
+        <span class="left">예약 내역</span>
+        <span class="right">${results.length}건 · ${order.length}일</span>
+      </div>
+      ${groupsHtml}
+    </div>`;
+}
+
+let debounceTimer = null;
+let searchSeq = 0;
+
+function setTyping(on){
+  $('#spinner').classList.toggle('on', on);
+}
+
+async function runSearch(query){
+  const mySeq = ++searchSeq;
+  try{
+    const res = await fetch('/api/public/my-order?q=' + encodeURIComponent(query) + '&today=' + todayStr(), { cache: 'no-store' });
+    if(mySeq !== searchSeq) return;
+    setTyping(false);
+    if(!res.ok) throw new Error('검색 실패');
+    const data = await res.json();
+    if(mySeq !== searchSeq) return;
+    const results = data.results || [];
+    if(results.length === 0) renderEmpty(query);
+    else renderResults(results);
+  }catch(e){
+    if(mySeq !== searchSeq) return;
+    setTyping(false);
+    renderEmpty(query);
+  }
+}
+
+$('#searchInput').addEventListener('input', (e)=>{
+  const query = e.target.value;
+  clearTimeout(debounceTimer);
+  searchSeq++; // 이전에 진행 중이던 검색 결과는 무시
+
+  if(!query.trim()){
+    setTyping(false);
+    renderIdle();
+    return;
+  }
+
+  setTyping(true);
+  renderLoading();
+  debounceTimer = setTimeout(()=>runSearch(query), 380);
+});
+
+renderIdle();
+
+/* ===== 홈 화면에 추가 안내 =====
+   완전 자동 설치는 브라우저 정책상 불가능해서(사용자 동작 최소 1번 필요),
+   iOS는 수동 안내, 안드로이드는 버튼 한 번으로 설치 팝업이 뜨도록 처리 */
+(function(){
+  const DISMISS_KEY = 'bj_myorder_install_dismissed_v1';
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if(isStandalone) return;                              // 이미 홈 화면에서 실행 중이면 안내 안 함
+  if(localStorage.getItem(DISMISS_KEY)) return;          // 이전에 닫았으면 다시 안 띄움
+
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+
+  const banner = document.getElementById('installBanner');
+  const body = document.getElementById('installBody');
+  const actionBtn = document.getElementById('installActionBtn');
+  const closeBtn = document.getElementById('installCloseBtn');
+  let deferredPrompt = null;
+
+  function showBanner(kind){
+    if(kind === 'ios'){
+      body.innerHTML = '하단 <b>공유</b> 버튼을 누르고 <b>"홈 화면에 추가"</b>를 선택하세요';
+      actionBtn.style.display = 'none';
+    } else {
+      body.textContent = '한 번만 누르면 앱처럼 바로 열 수 있어요';
+      actionBtn.style.display = 'inline-flex';
+    }
+    banner.style.display = 'flex';
+  }
+
+  // 안드로이드 Chrome: 설치 가능 조건을 만족하면 브라우저가 이 이벤트를 보내줌
+  window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault();
+    deferredPrompt = e;
+    showBanner('android');
+  });
+
+  if(isIOS) showBanner('ios');   // iOS는 자동 설치 프롬프트 자체가 없어서 안내만
+
+  actionBtn.addEventListener('click', async ()=>{
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    banner.style.display = 'none';
+    if(outcome === 'accepted') localStorage.setItem(DISMISS_KEY, '1');
+  });
+
+  closeBtn.addEventListener('click', ()=>{
+    banner.style.display = 'none';
+    localStorage.setItem(DISMISS_KEY, '1');
+  });
+})();
+</script>
+</body>
+</html>

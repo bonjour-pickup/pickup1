@@ -1,0 +1,3714 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>봉주르후르츠 픽업 체크</title>
+<style>
+  :root{
+    --bg:#F6F5F3;
+    --surface:#FFFFFF;
+    --ink:#1A1A1A;
+    --ink-soft:#8A8A8A;
+    --line:#ECEAE6;
+    --brand:#F81E00;
+    --brand-dark:#D31800;
+    --brand-soft:#FFEBE8;
+    --citrus:#F81E00;
+    --citrus-soft:#FFEBE8;
+    --leaf:#1E9E6A;
+    --leaf-soft:#E4F6EE;
+    --alert:#F81E00;
+    --alert-soft:#FFEBE8;
+    --amber:#E8920A;
+    --amber-soft:#FDF1DC;
+    --violet:#6C5CE0;
+    --violet-soft:#EDEAFB;
+    --radius:16px;
+    --radius-sm:11px;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.03);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',-apple-system,BlinkMacSystemFont,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+    letter-spacing:-0.2px;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:0 0 100px;display:none;}
+
+  /* Header */
+  header{
+    position:sticky;top:0;z-index:20;
+    background:rgba(246,245,243,.82);
+    backdrop-filter:saturate(180%) blur(12px);
+    -webkit-backdrop-filter:saturate(180%) blur(12px);
+    padding:14px 16px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .brand-left{display:flex;align-items:center;gap:10px;}
+  .brand-logo{
+    width:34px;height:34px;border-radius:10px;object-fit:cover;
+    box-shadow:0 2px 6px rgba(248,30,0,.25);flex-shrink:0;
+  }
+  .brand h1{font-size:18px;margin:0;font-weight:800;letter-spacing:-0.5px;}
+  .brand .stamp{
+    font-size:10.5px;font-weight:800;color:#fff;background:var(--brand);
+    border-radius:20px;padding:4px 10px;white-space:nowrap;letter-spacing:0.3px;
+    box-shadow:0 2px 6px rgba(248,30,0,.28);
+  }
+  .datebar{display:flex;align-items:center;gap:8px;margin-top:12px;}
+  .datebar input[type=date]{
+    border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-sm);
+    padding:8px 10px;font-size:13px;color:var(--ink);font-family:inherit;
+  }
+  .sync{font-size:11px;color:var(--ink-soft);margin-left:auto;display:flex;align-items:center;gap:5px;font-weight:600;}
+  .logout-btn{
+    background:none;border:none;color:var(--ink-soft);font-size:11px;font-weight:700;
+    cursor:pointer;padding:2px 4px;margin-left:8px;text-decoration:underline;flex-shrink:0;
+  }
+
+  /* Login screen */
+  .login-screen{
+    position:fixed;inset:0;background:var(--bg);z-index:200;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .login-card{
+    width:100%;max-width:340px;background:var(--surface);border:1px solid var(--line);
+    border-radius:20px;padding:28px 24px;box-shadow:0 8px 32px rgba(0,0,0,.08);text-align:center;
+  }
+  .login-card h1{font-size:19px;margin:0 0 6px;font-weight:800;letter-spacing:-0.4px;}
+  .login-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 20px;}
+  .login-card input{
+    width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:13px 14px;
+    font-size:16px;font-family:inherit;background:var(--bg);color:var(--ink);margin-bottom:10px;
+    box-sizing:border-box;text-align:center;
+  }
+  .login-card input:focus{outline:none;border-color:var(--brand);}
+  .login-err{color:var(--brand);font-size:12.5px;font-weight:700;margin:-2px 0 10px;}
+  .login-hint{font-size:11px;color:var(--ink-soft);margin:14px 0 0;line-height:1.5;}
+
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--leaf);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+  /* Stats */
+  .weekstrip{display:flex;gap:6px;padding:12px 16px 2px;overflow-x:auto;}
+  .wk-cell{
+    flex:1;min-width:42px;text-align:center;padding:7px 3px;border-radius:11px;
+    background:var(--surface);border:1px solid var(--line);cursor:pointer;position:relative;
+    transition:all .15s ease;
+  }
+  .wk-cell:active{transform:scale(.94);}
+  .wk-cell.today{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand) inset;}
+  .wk-cell.selected{background:var(--ink);border-color:var(--ink);}
+  .wk-dow{font-size:10px;color:var(--ink-soft);font-weight:600;}
+  .wk-cell.selected .wk-dow{color:rgba(255,255,255,.7);}
+  .wk-date{font-size:15px;font-weight:800;margin-top:1px;}
+  .wk-cell.selected .wk-date{color:#fff;}
+  .wk-badge{
+    position:absolute;top:-6px;right:-4px;background:var(--brand);color:#fff;font-size:9.5px;font-weight:800;
+    border-radius:20px;padding:1px 6px;min-width:15px;max-width:calc(100% + 8px);line-height:1.4;
+    box-shadow:0 1px 4px rgba(0,0,0,.2);white-space:nowrap;letter-spacing:-0.2px;
+  }
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:14px 16px 4px;}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:13px 8px;text-align:center;cursor:pointer;transition:all .15s ease;box-shadow:var(--shadow);}
+  .stat:active{transform:scale(.96);}
+  .stat.on{border-color:var(--ink);box-shadow:0 0 0 1.5px var(--ink) inset;}
+  .stat.done.on{border-color:var(--leaf);box-shadow:0 0 0 1.5px var(--leaf) inset;}
+  .stat.left.on{border-color:var(--citrus);box-shadow:0 0 0 1.5px var(--citrus) inset;}
+  .stat b{display:block;font-size:21px;font-weight:800;}
+  .stat span{font-size:11px;color:var(--ink-soft);font-weight:600;}
+  .stat.done b{color:var(--leaf);}
+  .stat.left b{color:var(--amber);}
+  .stat.left.on{border-color:var(--amber);box-shadow:0 0 0 1.5px var(--amber) inset;}
+
+  .stat-summary{
+    margin:0 16px 12px;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);
+  }
+  .stat-sum-head{font-size:12.5px;font-weight:800;color:var(--ink);margin-bottom:10px;}
+  .stat-sum-grid{display:flex;flex-direction:column;gap:6px;}
+  .stat-sum-item{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:13px;padding:8px 11px;background:var(--bg);border-radius:var(--radius-sm);
+  }
+  .stat-sum-item b{color:var(--brand);font-weight:800;}
+  .close-sec{margin-bottom:18px;}
+  .close-sec-head{font-size:13.5px;font-weight:800;margin-bottom:6px;padding-bottom:5px;border-bottom:2px solid var(--line);}
+  .close-sec-head.c-noshow{color:var(--brand);border-color:var(--brand-soft);}
+  .close-sec-head.c-pending{color:var(--amber);border-color:var(--amber-soft);}
+  .close-sec-head.c-post{color:var(--violet);border-color:var(--violet-soft);}
+  .close-sec-head.c-cancel{color:var(--ink-soft);border-color:var(--line);}
+  .rtotal.c-noshow{background:var(--brand-soft);color:var(--brand);}
+  .rtotal.c-pending{background:var(--amber-soft);color:var(--amber);}
+  .rtotal.c-post{background:var(--violet-soft);color:var(--violet);}
+  .rtotal.c-cancel{background:#F0F0F0;color:#777;}
+  .search-suggest{padding:0 16px 10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .sg-label{font-size:11px;color:var(--ink-soft);font-weight:700;width:100%;margin-bottom:2px;}
+  .sg-chip{
+    background:var(--surface);border:1px solid var(--line);border-radius:20px;
+    padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--ink);
+    display:flex;align-items:center;gap:5px;box-shadow:var(--shadow);
+  }
+  .sg-chip:active{transform:scale(.95);}
+  .sg-chip.ordered{border-color:var(--leaf);background:var(--leaf-soft);}
+  .sg-chip .sg-ph{font-size:11px;color:var(--ink-soft);font-weight:600;}
+  .suggest-box{
+    max-height:230px;overflow-y:auto;border:1px solid var(--line);border-radius:var(--radius-sm);
+    background:var(--surface);margin:-4px 0 10px;box-shadow:var(--shadow);
+  }
+  .suggest-item{
+    padding:11px 13px;border-bottom:1px solid var(--line);cursor:pointer;
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+  }
+  .suggest-item:last-child{border-bottom:none;}
+  .suggest-item:active{background:var(--brand-soft);}
+  .suggest-name{font-size:14px;font-weight:700;}
+  .suggest-meta{font-size:11px;color:var(--ink-soft);}
+  .suggest-empty{padding:12px;font-size:12.5px;color:var(--ink-soft);text-align:center;}
+  .dormant-badge{font-size:10px;background:var(--violet-soft);color:var(--violet);padding:3px 8px;border-radius:20px;font-weight:700;}
+  .hist-row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:12.5px;}
+  .hist-row:last-child{border-bottom:none;}
+  .hist-date{color:var(--ink-soft);font-size:11.5px;white-space:nowrap;}
+  .hist-tag{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700;white-space:nowrap;}
+  .tag-picked{background:var(--leaf-soft);color:var(--leaf);}
+  .tag-noshow{background:var(--brand-soft);color:var(--brand);}
+  .tag-cancel{background:#F0F0F0;color:#777;}
+  .detail-stat{display:flex;gap:8px;margin-bottom:14px;}
+  .detail-stat div{flex:1;background:var(--bg);border-radius:var(--radius-sm);padding:11px 6px;text-align:center;}
+  .detail-stat b{display:block;font-size:18px;font-weight:800;}
+  .detail-stat span{font-size:10.5px;color:var(--ink-soft);}
+  .member-row.clickable{cursor:pointer;}
+
+  .prodbar-label{padding:8px 16px 4px;font-size:11px;font-weight:700;color:var(--ink-soft);}
+  .prodbar{padding:2px 16px 10px;display:flex;flex-wrap:wrap;gap:6px;}
+  .prodchip{
+    background:var(--surface);color:var(--ink);font-size:12.5px;font-weight:700;
+    padding:7px 13px;border-radius:20px;white-space:nowrap;cursor:pointer;border:1px solid var(--line);
+    transition:all .15s ease;box-shadow:var(--shadow);
+  }
+  .prodchip:active{transform:scale(.95);}
+  .prodchip.active{background:var(--brand);color:#fff;border-color:var(--brand);box-shadow:0 3px 10px rgba(248,30,0,.24);}
+  .prodchip .cnt{opacity:.6;margin-left:5px;font-weight:600;}
+  .prodchip .cnt-fp{
+    margin-left:4px;font-size:10.5px;font-weight:800;color:#fff;background:#7A5AA8;
+    padding:1px 6px;border-radius:20px;
+  }
+  .prodchip.active .cnt-fp{background:#fff;color:#7A5AA8;}
+  .prodchip.active .cnt{opacity:.85;}
+  .prod-print-btn{
+    margin-left:6px;border:none;background:rgba(255,255,255,.5);border-radius:6px;
+    width:20px;height:20px;font-size:11px;line-height:20px;padding:0;cursor:pointer;
+    vertical-align:middle;
+  }
+  .prodchip.active .prod-print-btn{background:rgba(255,255,255,.25);}
+  .prod-print-btn:active{transform:scale(.9);}
+  .filter-banner{
+    margin:0 16px 10px;padding:11px 14px;background:var(--brand-soft);border-radius:var(--radius-sm);
+    display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--brand-dark);font-weight:700;
+  }
+  .filter-banner button{background:none;border:none;color:var(--brand-dark);font-weight:800;cursor:pointer;font-size:13px;}
+
+  /* Tabs */
+  .tabs{display:flex;gap:6px;padding:4px 16px 12px;}
+  .tab{flex:1;text-align:center;padding:10px 0;border-radius:var(--radius-sm);font-size:12.5px;font-weight:700;
+    background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .tab:active{transform:scale(.97);}
+  .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.12);}
+
+  .modebtn{flex:1;text-align:center;padding:10px 0;border-radius:var(--radius-sm);font-size:12.5px;font-weight:700;
+    background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .modebtn:active{transform:scale(.97);}
+  .modebtn.active{background:var(--brand);color:#fff;border-color:var(--brand);}
+
+  section{padding:0 16px;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .card h2{font-size:14px;margin:0 0 12px;font-weight:800;letter-spacing:-0.3px;}
+  .row{display:flex;gap:8px;margin-bottom:8px;}
+  .row input, .row textarea{
+    flex:1;border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;font-size:14px;
+    font-family:inherit;background:var(--bg);color:var(--ink);transition:border-color .15s ease;
+  }
+  .row input:focus, .row textarea:focus{outline:none;border-color:var(--brand);}
+  textarea{min-height:70px;resize:vertical;}
+  .hint{font-size:11.5px;color:var(--ink-soft);margin:-2px 0 10px;line-height:1.5;}
+  .camp-warn{
+    background:#FBEAE6;border:1px solid #E8B4AA;color:#8f2b25;border-radius:10px;
+    padding:10px 12px;font-size:12.5px;line-height:1.5;margin:-2px 0 10px;font-weight:600;
+  }
+  .btn{
+    border:none;border-radius:var(--radius-sm);padding:12px 16px;font-size:14px;font-weight:700;
+    cursor:pointer;transition:transform .08s ease, box-shadow .15s ease;letter-spacing:-0.2px;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--ink);color:#fff;width:100%;}
+  .btn-ghost{background:var(--surface);color:var(--ink-soft);border:1px solid var(--line);}
+  .btn-alert{background:var(--brand);color:#fff;width:100%;box-shadow:0 3px 10px rgba(248,30,0,.24);}
+
+  .search{padding:0 16px 10px;}
+  .search input{
+    width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px 14px;font-size:14px;
+    background:var(--surface);box-shadow:var(--shadow);transition:border-color .15s ease;
+  }
+  .search input:focus{outline:none;border-color:var(--brand);}
+
+  /* Order list */
+  .order{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:15px;margin-bottom:10px;box-shadow:var(--shadow);
+    transition:background .2s ease, border-color .2s ease;
+  }
+  .order.picked{background:var(--leaf-soft);border-color:#BFE9D5;}
+  .order .toprow{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;}
+  .order .name{font-size:15.5px;font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap;letter-spacing:-0.3px;}
+  .progress-badge{font-size:10.5px;font-weight:700;color:var(--ink-soft);background:var(--bg);padding:3px 9px;border-radius:20px;}
+  .order.picked .progress-badge{color:var(--leaf);background:#fff;}
+  .noshow-badge{font-size:10px;background:var(--alert-soft);color:var(--alert);padding:3px 8px;border-radius:20px;font-weight:700;}
+  .guest-badge{font-size:10px;background:var(--amber-soft);color:var(--amber);padding:3px 8px;border-radius:20px;font-weight:700;}
+  .warn-badge{font-size:10px;background:var(--brand);color:#fff;padding:3px 8px;border-radius:20px;font-weight:800;}
+
+  /* Members */
+  .subtabs{display:flex;gap:6px;padding:0 16px 12px;}
+  .subtab{
+    flex:1;text-align:center;padding:10px 0;border-radius:var(--radius-sm);font-size:13px;font-weight:700;
+    background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);cursor:pointer;transition:all .15s ease;
+  }
+  .subtab.active{background:var(--brand);color:#fff;border-color:var(--brand);box-shadow:0 3px 10px rgba(248,30,0,.24);}
+  .subcnt{opacity:.8;font-weight:600;font-size:11.5px;}
+  .src-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;}
+  .src-manual{background:var(--violet-soft);color:var(--violet);}
+  .src-kakao{background:var(--amber-soft);color:var(--amber);}
+  .member-row{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 0;border-bottom:1px solid var(--line);
+  }
+  .member-row:last-child{border-bottom:none;}
+  .member-info{flex:1;min-width:0;}
+  .member-name{font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap;letter-spacing:-0.3px;}
+  .member-sub{font-size:11.5px;color:var(--ink-soft);margin-top:3px;}
+  .phone-tag{
+    font-size:11px;font-weight:700;background:var(--leaf-soft);color:var(--leaf);
+    padding:3px 8px;border-radius:20px;
+  }
+  .member-actions{display:flex;gap:5px;flex-shrink:0;}
+  .mini-btn{
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    border-radius:var(--radius-sm);padding:6px 10px;font-size:11.5px;font-weight:700;cursor:pointer;transition:all .15s ease;
+  }
+  .mini-btn:active{transform:scale(.95);}
+  .mini-btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .unmatched-row{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 0;border-bottom:1px solid var(--line);
+  }
+  .unmatched-row:last-child{border-bottom:none;}
+  .order .note{font-size:11.5px;color:var(--brand);margin:2px 0 8px;font-weight:600;}
+  .item-line{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:8px 0;border-top:1px dashed var(--line);flex-wrap:wrap;
+  }
+  .item-line:first-of-type{border-top:none;}
+  .item-name{font-size:13.5px;color:var(--ink);flex:1;min-width:100px;}
+  .item-name b{font-weight:800;color:var(--brand);margin-left:4px;}
+  .item-line.cancelled .item-name{text-decoration:line-through;color:var(--ink-soft);}
+  .item-btns{display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;}
+  .phone-inline{font-size:12.5px;font-weight:700;color:var(--leaf);margin-left:5px;}
+  .st-btn{
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;
+    transition:all .15s ease;
+  }
+  .st-btn:active{transform:scale(.94);}
+  .st-btn.b-pick.on{background:var(--leaf);border-color:var(--leaf);color:#fff;}
+  .st-btn.b-noshow.on{background:var(--brand);border-color:var(--brand);color:#fff;}
+  .st-btn.b-post.on{background:var(--violet);border-color:var(--violet);color:#fff;}
+  .st-btn.b-cancel.on{background:#7A7A7A;border-color:#7A7A7A;color:#fff;}
+  .state-tag{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;margin-left:6px;white-space:nowrap;}
+  .tag-postponed{background:var(--violet-soft);color:var(--violet);}
+  .tag-cancelled{background:#F0F0F0;color:#777;}
+  .tag-none{background:var(--bg);color:var(--ink-soft);}
+  .item-check{
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    border-radius:20px;padding:6px 13px;font-size:12.5px;font-weight:700;cursor:pointer;
+    flex-shrink:0;transition:all .15s ease;
+  }
+  .item-check.on{background:var(--leaf);border-color:var(--leaf);color:#fff;}
+  .item-cancel{
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    border-radius:20px;padding:6px 11px;font-size:12.5px;font-weight:700;cursor:pointer;
+    flex-shrink:0;transition:all .15s ease;
+  }
+  .item-cancel.on{background:var(--brand);border-color:var(--brand);color:#fff;}
+  .del{background:none;border:none;color:#C4C4C4;font-size:16px;cursor:pointer;padding:2px 4px;flex-shrink:0;}
+
+  /* Staff comment */
+  .comment-box{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);}
+  .comment-list{display:flex;flex-direction:column;gap:5px;margin-bottom:7px;}
+  .comment-item{
+    font-size:12px;background:var(--leaf-soft);color:var(--leaf);border-radius:10px;
+    padding:7px 10px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start;
+  }
+  .comment-item .ctime{font-size:10px;color:var(--ink-soft);white-space:nowrap;}
+  .comment-item .cdel{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:12px;padding:0 2px;}
+  .comment-input-row{display:flex;gap:6px;}
+  .comment-input-row input{
+    flex:1;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:12.5px;
+    background:var(--bg);color:var(--ink);font-family:inherit;
+  }
+  .comment-input-row button{
+    background:var(--ink);color:#fff;border:none;border-radius:8px;padding:0 13px;font-size:12.5px;
+    font-weight:700;cursor:pointer;flex-shrink:0;
+  }
+
+  .empty{text-align:center;color:var(--ink-soft);font-size:13.5px;padding:40px 20px;}
+
+  /* Today summary table */
+  .summary-wrap{overflow-x:auto;margin-bottom:16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);}
+  .summary-table{border-collapse:collapse;width:100%;font-size:12.5px;white-space:nowrap;}
+  .summary-table th, .summary-table td{padding:8px 12px;text-align:center;border-bottom:1px solid var(--line);}
+  .summary-table th{background:var(--bg);font-weight:800;color:var(--ink-soft);font-size:11.5px;position:sticky;top:0;}
+  .summary-table td:first-child, .summary-table th:first-child{
+    text-align:left;font-weight:700;position:sticky;left:0;background:var(--surface);
+  }
+  .summary-table th:first-child{background:var(--bg);}
+  .summary-table tr:last-child td{border-bottom:none;}
+  .summary-table .qty-done{color:var(--leaf);}
+  .summary-table .qty-left{color:var(--amber);font-weight:700;}
+  .summary-table .qty-empty{color:var(--line);}
+
+  .footer-actions{
+    position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.9);
+    backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);
+    border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    max-width:640px;margin:0 auto;
+  }
+
+  .noshow-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .noshow-item:last-child{border-bottom:none;}
+  .noshow-item b{font-size:12px;background:var(--brand-soft);color:var(--brand);padding:3px 9px;border-radius:20px;}
+
+  ::placeholder{color:#BDBDBD;}
+
+  /* Print */
+  #printArea{display:none;}
+  .print-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+  .print-header h1{font-size:17px;margin:0;font-weight:800;}
+  .print-header span{font-size:12px;color:#444;}
+  .print-table{width:100%;border-collapse:collapse;}
+  .print-table thead{display:table-header-group;}
+  .print-table tr{page-break-inside:avoid;}
+  .print-table th, .print-table td{border:1px solid #999;text-align:center;}
+  .print-table td.pname{text-align:left;font-weight:700;}
+  .print-lg{font-size:13px;}
+  .print-lg th, .print-lg td{padding:6px 8px;}
+  .print-md{font-size:10.5px;}
+  .print-md th, .print-md td{padding:4px 6px;}
+  .print-sm{font-size:8.5px;}
+  .print-sm th, .print-sm td{padding:2px 4px;}
+
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{display:block !important;position:absolute;left:0;top:0;width:100%;}
+    @page{size:A4 portrait;margin:12mm;}
+  }
+  .toast{
+    position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:#fff;padding:11px 18px;border-radius:20px;font-size:13px;font-weight:600;
+    opacity:0;pointer-events:none;transition:opacity .25s ease, bottom .25s ease;z-index:50;
+    box-shadow:0 8px 24px rgba(0,0,0,.2);
+  }
+  .toast.show{opacity:1;bottom:96px;}
+
+  .retry-banner{
+    position:fixed;bottom:0;left:0;right:0;max-width:640px;margin:0 auto;z-index:55;
+    background:var(--brand-soft);border-top:1.5px solid var(--brand);
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .retry-banner span{flex:1;min-width:140px;font-size:12.5px;color:var(--brand-dark);font-weight:600;}
+  .retry-banner .mini-btn.primary{background:var(--brand);color:#fff;border-color:var(--brand);}
+
+  /* Close-day result modal */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(26,26,26,.5);
+    backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+    display:flex;align-items:flex-end;justify-content:center;z-index:60;
+  }
+  .modal-card{
+    background:var(--surface);width:100%;max-width:640px;max-height:82vh;
+    border-radius:24px 24px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+    overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.15);
+  }
+  .modal-card h2{font-size:17px;margin:0 0 4px;font-weight:800;letter-spacing:-0.4px;}
+  .modal-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 14px;}
+  .modal-empty{text-align:center;color:var(--ink-soft);font-size:13.5px;padding:24px 0;}
+  .result-row{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+    padding:11px 0;border-bottom:1px solid var(--line);
+  }
+  .result-row:last-child{border-bottom:none;}
+  .result-row .rname{font-weight:800;font-size:14.5px;}
+  .result-row .ritems{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .result-row .rtotal{
+    font-size:12px;font-weight:700;color:var(--alert);background:var(--alert-soft);
+    padding:3px 9px;border-radius:10px;white-space:nowrap;flex-shrink:0;
+  }
+  .result-summary{
+    display:flex;gap:8px;margin:14px 0 6px;padding:10px 12px;background:var(--bg);
+    border-radius:10px;font-size:12.5px;color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login-screen" style="display:none;">
+  <div class="login-card">
+    <h1>🍑 봉주르후르츠 픽업</h1>
+    <p class="login-sub">직원 공용 비밀번호를 입력해주세요</p>
+    <input type="password" id="loginPassword" placeholder="비밀번호" autocomplete="current-password" />
+    <p class="login-err" id="loginErr" style="display:none;"></p>
+    <button class="btn btn-primary" id="loginBtn">로그인</button>
+    <p class="login-hint">한 번 로그인하면 로그아웃하기 전까지 계속 접속돼요</p>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-left">
+        <img class="brand-logo" src="data:image/png;base64,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03v39BmdOG76Lvy2T1u3Me0A/pAhnfLlUdYsypxFKWOUJo35y1RX6cqUf9zKPHJEJ4/rwEHt3a/tu00XY4AoAwAAQLdfAABAlAEAACDKAAAAEGUAAABRBgAAgCgDAABAlAEAACDKAAAAogwAAABRBgAAgCgDAACIMgAAAEQZAAAAogwAAABRBgAAEGUAAACIMgAAAEQZAAAAogwAACDKAAAAEGUAAACIMgAAgCgDAABAlAEAACDKAAAAEGUAAABRBgAAgCgDAABAlAEAACDKAAAAogwAAABRBgAAgCgDAACIMgAAAEQZAAAAogwAAABRBgAAEGUAAACIMgAAAEQZAABAlAEAACDKAAAAEGUAAACIMgAAgCgDAABAlAEAACDKAAAAEGUAAABRBgAAgCgDAABAlAEAAEQZAAAAogwAAABRBgAAgCgDAACIMgAAAEQZAAAAogwAAABRBgAAEGUAAACIMgAAAEQZAABAlAEAACDKAAAAEGUAAACIMgAAgCgDAABAlAEAACDKAAAAEGUAAABRBgAAgCgDAABAlAEAAEQZAAAAogwAAABRBgAAgCgDAACIMgAAAEQZAAAAogwAACDKAAAAEGUAAACIMgAAAEQZAABAlAEAACDKAAAAEGUAAACIMgAAgCgDAABAlAEAACDKAAAAogwAAABRBgAAgCgDAABAlAEAAEQZAAAAogwAAABRBgAAgCgDAACIMgAAAEQZAAAAogwAACDKAAAAEGUAAACIMgAAAEQZAABAlAEAACDKAAAAEGUAAACIMgAAgCgDAABAlAEAACDKAAAAogwAAABRBgAAgCgDAABAlAEAAEQZAAAAogwAAABRBgAAEGUAAACIMgAAAEQZAAAAogwAACDKAAAAEGUAAACIMgAAAEQZAABAlAEAACDKAAAAEGUAAABRBgAAgCgDAABAlAEAACDKAAAAogwAAABRBgAAgCgDAABAlAEAAEQZAAAAogwAAABRBgAAEGUAAACIMgAAAEQZAAAAogwAACDKAAAAEGUAAACIMgAAgCjDKgAAAEQZAAAAogwAAABRBgAAEGUAAACIMgAAAEQZAAAAogwAACDKAAAAEGUAAACIMgAAgCgDAABAlAEAACDKAAAAEGUAAABRBgAAgCgDAABAlAEAACDKAAAAogwAAABRBgAAgCgDAACIMgAAAEQZAAAAogwAAABRBgAAEGUAAACIMgAAAEQZAAAAogwAACDKAAAAEGUAAACIMgAAgCgDAABAlAEAACDKAAAAEGUAAABRBgAAgCgDAABAlAEAAEQZAAAAogwAAABRBgAAgCgDAACIMgAAAEQZAAAAogwAAABRBgAAEGUAAACIMgAAAEQZAABAlAEAACDKAAAAEGUAAACIMgAAgCgDAABAlAEAACDKAAAAEGUAAABRBgAAgCgDAABAlAEAAEQZAAAAogwAAABRBgAAgCgDAACIMgAAAEQZAAAAogwAAABRBgAAEGUAAACIMgAAAEQZAABAlAEAACDKAAAAEGUAAACIMgAAgCgDAABAlAEAACDKAAAAogwAAABRBgAAgCgDAABAlAEAAEQZAAAAogwAAABRBgAAgCgDAACIMgAAAEQZAAAAogwAACDKAAAAEGUAAACIMgAAAEQZAABAlAEAACDKAAAAEGUAAACIMgAAgCgDAABAlAEAACDKAAAAogwAAABRBgAAgCgDAABAlAEAAEQZAAAAogwAAABRBgAAgCgDAACIMgAAAEQZAAAAogwAACDKAAAAEGUAAACIMgAAAEQZAABAlAEAACDKAAAAEGUAAABRBgAAgCgDAABAlAGA/2O3jgUAAAAABvlbT2NHUQSgMgCAygAAfCXAAGLuQe7oH8YpAAAAAElFTkSuQmCC" alt="봉주르후르츠" />
+        <h1>봉주르후르츠 픽업</h1>
+      </div>
+      <span class="stamp">STAFF</span>
+    </div>
+    <div class="datebar">
+      <input type="date" id="dateInput" />
+      <button class="btn btn-ghost" id="resetBtn" style="padding:6px 10px;font-size:12px;">🗑 초기화</button>
+      <div class="sync"><span class="dot"></span><span id="syncLabel">실시간 동기화</span><button class="logout-btn" id="logoutBtn">로그아웃</button></div>
+    </div>
+  </header>
+
+  <div class="weekstrip" id="weekStrip"></div>
+
+  <div class="stats">
+    <div class="stat" data-statfilter="all"><b id="statTotal">0</b><span>총 주문</span></div>
+    <div class="stat done" data-statfilter="done"><b id="statDone">0</b><span>수령완료</span></div>
+    <div class="stat left" data-statfilter="left"><b id="statLeft">0</b><span>미수령</span></div>
+  </div>
+  <div class="prodbar-label" id="prodBarLabel">당일 상품 (누르면 예약자 보기)</div>
+  <div class="prodbar" id="prodBar"></div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="list">📋 픽업 리스트</div>
+    <div class="tab" data-tab="add">➕ 주문 입력</div>
+    <div class="tab" data-tab="cancel">↩️ 취소 명단</div>
+    <div class="tab" data-tab="noshow">🚫 노쇼 기록</div>
+    <div class="tab" data-tab="members">👤 회원</div>
+    <div class="tab" data-tab="schedule">📅 일정</div>
+  </div>
+
+  <!-- LIST TAB -->
+  <section id="tab-list">
+    <div class="search"><input id="searchInput" placeholder="이름·초성·번호로 검색 (ㄱ, 가, 감, 1561)" autocomplete="off" /></div>
+    <div id="searchSuggest" class="search-suggest" style="display:none;"></div>
+    <div id="statSummary" class="stat-summary" style="display:none;"></div>
+    <div style="padding:0 16px 10px;display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">
+      <button class="btn btn-ghost" id="pastPendingBtn" style="padding:7px 12px;font-size:12.5px;">📌 지난 미수령 조회</button>
+      <button class="btn btn-ghost" id="backupBtn" style="padding:7px 12px;font-size:12.5px;">💾 백업</button>
+      <button class="btn btn-ghost" id="restoreBtn" style="padding:7px 12px;font-size:12.5px;">📂 복원</button>
+      <button class="btn btn-ghost" id="printBtn" style="padding:7px 14px;font-size:12.5px;">🖨 명단 출력</button>
+      <input type="file" id="restoreFile" accept="application/json,.json" style="display:none;" />
+    </div>
+    <div class="summary-wrap"><table class="summary-table" id="summaryTable"></table></div>
+    <div id="orderList"></div>
+  </section>
+
+  <!-- ADD TAB -->
+  <section id="tab-add" style="display:none;">
+    <div class="card">
+      <h2>빠른 추가</h2>
+      <div class="row" style="position:relative;">
+        <input id="qName" placeholder="주문자명 (ㄱ, 가, 감 처럼 입력하면 회원 검색)" autocomplete="off" />
+      </div>
+      <div id="nameSuggest" class="suggest-box" style="display:none;"></div>
+      <div class="row">
+        <input id="qProduct" placeholder="상품명 (예: 사과1세트)" />
+        <input id="qQty" type="number" min="1" placeholder="수량" style="max-width:80px;" />
+      </div>
+      <div class="row">
+        <input id="qNote" placeholder="비고 (선택)" />
+      </div>
+      <button class="btn btn-primary" id="addOneBtn">주문 추가</button>
+      <p class="hint">같은 이름으로 다시 추가하면 자동으로 합산/추가돼요.</p>
+    </div>
+
+    <div class="card">
+      <h2>일괄 붙여넣기</h2>
+      <div class="row">
+        <textarea id="bulkInput" placeholder="한 줄에 하나씩:&#10;이름,상품,수량,비고&#10;김철수,사과1세트,2&#10;이영희,배1박스,1,오후늦게"></textarea>
+      </div>
+      <button class="btn btn-primary" id="bulkAddBtn">일괄 추가</button>
+      <p class="hint">Claude로 스크린샷을 정리한 표를 이 형식으로 붙여넣으면 한 번에 등록돼요.</p>
+    </div>
+  </section>
+
+  <!-- CANCEL TAB -->
+  <section id="tab-cancel" style="display:none;">
+    <div class="card">
+      <h2>주문 취소 명단</h2>
+      <div id="cancelList"><div class="empty">취소된 주문이 없습니다</div></div>
+    </div>
+  </section>
+
+  <!-- NOSHOW TAB -->
+  <section id="tab-noshow" style="display:none;">
+    <div class="card">
+      <h2>노쇼 누적 기록</h2>
+      <div id="noshowList"><div class="empty">기록이 없습니다</div></div>
+    </div>
+  </section>
+
+  <!-- MEMBERS TAB -->
+  <section id="tab-members" style="display:none;">
+    <div class="card" id="unmatchedCard" style="display:none;">
+      <h2>⚠️ 명단에 없는 오늘 주문자</h2>
+      <p class="hint" style="margin:-2px 0 10px;">닉네임을 바꿨거나 아직 등록 안 된 분이에요. 눌러서 회원으로 추가하세요.</p>
+      <div id="unmatchedList"></div>
+    </div>
+
+    <div class="subtabs">
+      <div class="subtab active" data-sub="kakao">💬 카톡명단 <span id="cntKakao" class="subcnt"></span></div>
+      <div class="subtab" data-sub="managed">📇 관리명단 <span id="cntManaged" class="subcnt"></span></div>
+    </div>
+
+    <!-- 카톡명단 -->
+    <div id="viewKakao">
+      <div class="card">
+        <h2>명단 붙여넣기</h2>
+        <div class="row">
+          <textarea id="rosterInput" placeholder="한 줄에 한 명씩:&#10;김철수 1234&#10;이영희(5678)&#10;과일러버"></textarea>
+        </div>
+        <button class="btn btn-primary" id="rosterAddBtn">명단 등록</button>
+        <p class="hint">전화번호 뒤 4자리가 있으면 자동 인식돼요. 이미 있는 회원은 건너뜁니다.</p>
+      </div>
+
+      <div class="card">
+        <h2>카톡 전체 명단 <span id="memberCount" style="color:var(--ink-soft);font-weight:600;"></span></h2>
+        <div class="row">
+          <input id="memberSearch" placeholder="이름 또는 번호로 검색..." />
+        </div>
+        <div id="memberList"><div class="empty">등록된 회원이 없습니다</div></div>
+      </div>
+    </div>
+
+    <!-- 관리명단 -->
+    <div id="viewManaged" style="display:none;">
+      <div class="card">
+        <h2>관리명단 <span id="managedCount" style="color:var(--ink-soft);font-weight:600;"></span></h2>
+        <p class="hint" style="margin:-2px 0 10px;">전화번호가 확보된 회원이에요. 닉네임이 바뀌어도 계속 추적됩니다.</p>
+        <div class="row">
+          <input id="managedSearch" placeholder="이름 또는 번호로 검색..." />
+        </div>
+        <div style="margin:-2px 0 10px;">
+          <button class="mini-btn" id="dormantToggle">😴 1개월+ 미구매만 보기</button>
+        </div>
+        <div id="managedList"><div class="empty">아직 번호가 등록된 회원이 없습니다</div></div>
+      </div>
+
+      <div class="card" id="pendingCard" style="display:none;">
+        <h2>📱 번호 미등록 회원 <span id="pendingCount" style="color:var(--ink-soft);font-weight:600;"></span></h2>
+        <p class="hint" style="margin:-2px 0 10px;">번호를 넣으면 관리명단으로 올라가요. 픽업할 때 하나씩 채우시면 좋아요.</p>
+        <div id="pendingList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCHEDULE TAB -->
+  <section id="tab-schedule" style="display:none;">
+    <div class="card">
+      <h2>공동구매 등록</h2>
+      <div class="row">
+        <input id="campProduct" placeholder="상품명 (예: 산청 딸기)" />
+      </div>
+      <div class="row">
+        <input id="campNote" placeholder="코멘트 (선택 — 상품명 아래 작게 표시돼요, 예: 목포가면 누구나 사오는 건강간식)" />
+      </div>
+
+      <p class="hint" style="margin:0 0 6px;">마감 기준</p>
+      <div class="tabs" style="padding:0 0 12px;">
+        <div class="modebtn active" data-campmode="time">⏰ 시간 기준</div>
+        <div class="modebtn" data-campmode="qty">📦 수량 기준</div>
+      </div>
+
+      <div id="campModeTime" class="row">
+        <div style="flex:1;">
+          <p class="hint" style="margin:0 0 4px;">마감 시각</p>
+          <input id="campDeadline" type="datetime-local" style="width:100%;" />
+        </div>
+      </div>
+      <div id="campModeQty" class="row" style="display:none;">
+        <div style="flex:1;">
+          <p class="hint" style="margin:0 0 4px;">총 수량</p>
+          <input id="campTotalQty" type="number" min="1" placeholder="예: 100" style="width:100%;" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div style="flex:1;">
+          <p class="hint" style="margin:0 0 4px;">픽업 예정일</p>
+          <input id="campPickup" type="date" style="width:100%;" />
+        </div>
+      </div>
+      <div id="campPostponeWarn" style="display:none;"></div>
+      <div class="row" style="align-items:center;">
+        <div style="flex:1;">
+          <p class="hint" style="margin:0 0 6px;">상품 사진 (선택 — 매장 화면에 표시돼요)</p>
+          <input type="file" id="campImageInput" accept="image/*" style="font-size:12.5px;" />
+        </div>
+        <img id="campImagePreview" style="display:none;width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line);flex-shrink:0;" />
+        <button class="mini-btn" id="campImageClearBtn" style="display:none;flex-shrink:0;">제거</button>
+      </div>
+      <button class="btn btn-primary" id="campAddBtn">캠페인 등록</button>
+      <p class="hint">등록해두면 매장 화면(/board)과 이 탭에 마감·픽업일이 자동으로 표시돼요.</p>
+    </div>
+
+    <div class="card">
+      <h2>등록된 캠페인 <span id="campCount" style="color:var(--ink-soft);font-weight:600;"></span></h2>
+      <div id="campList"><div class="empty">등록된 캠페인이 없습니다</div></div>
+    </div>
+  </section>
+</div>
+
+<div class="modal-overlay" id="delCampModal" style="display:none;">
+  <div class="modal-card" style="max-height:none;">
+    <h2>캠페인 삭제</h2>
+    <p class="modal-sub" id="delCampText" style="margin-bottom:16px;"></p>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" id="delCampCancelBtn" style="flex:1;">취소</button>
+      <button class="btn btn-alert" id="delCampOkBtn" style="flex:1;">삭제</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer-actions" id="footerActions" style="display:none;">
+  <button class="btn btn-alert" id="closeDayBtn">🔒 마감</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="retry-banner" id="postponeRetryBanner" style="display:none;">
+  <span id="postponeRetryText"></span>
+  <button class="mini-btn primary" id="postponeRetryBtn">다시 시도</button>
+  <button class="mini-btn" id="postponeRetryDismiss">닫기</button>
+</div>
+
+<div id="printArea"></div>
+
+<div class="modal-overlay" id="pastPendingModal" style="display:none;">
+  <div class="modal-card">
+    <h2>📌 지난 미수령 조회</h2>
+    <p class="modal-sub" style="margin-bottom:10px;">이름을 입력하면 최근 14일 안에서, 아직 아무 처리도 안 된(미처리) 주문을 찾아드려요. 여기서 바로 수령 처리할 수 있어요.</p>
+    <input id="pastPendingInput" type="text" placeholder="고객 이름"
+      style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px;font-size:15px;background:var(--bg);color:var(--ink);font-family:inherit;margin-bottom:10px;" />
+    <button class="btn btn-primary" id="pastPendingSearchBtn" style="margin-bottom:14px;">조회</button>
+    <div id="pastPendingResults"></div>
+    <button class="btn btn-ghost" id="pastPendingCloseBtn" style="width:100%;margin-top:10px;">닫기</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="postponeModal" style="display:none;">
+  <div class="modal-card" style="max-height:none;">
+    <h2>🕒 연기 날짜 선택</h2>
+    <p class="modal-sub" id="postponeSub" style="margin-bottom:12px;"></p>
+    <div id="quickDates" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
+    <input id="postponeDate" type="date"
+      style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px;font-size:16px;background:var(--bg);color:var(--ink);font-family:inherit;margin-bottom:8px;" />
+    <p class="hint" style="margin:0 0 14px;">선택한 날짜에 주문이 새로 등록돼요. 오늘 내역에는 '연기'로 남아서 누가 연기했는지 확인할 수 있어요.</p>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" id="postponeCancelBtn" style="flex:1;">취소</button>
+      <button class="btn btn-primary" id="postponeOkBtn" style="flex:1;">연기 확정</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailModal" style="display:none;">
+  <div class="modal-card">
+    <h2 id="detailName"></h2>
+    <p class="modal-sub" id="detailSub"></p>
+    <div class="detail-stat">
+      <div><b id="dStatBuys">0</b><span>구매</span></div>
+      <div><b id="dStatItems" style="color:var(--citrus);">0</b><span>총 수량</span></div>
+      <div><b id="dStatNoshow" style="color:var(--alert);">0</b><span>노쇼</span></div>
+      <div><b id="dStatCancel" style="color:var(--ink-soft);">0</b><span>취소</span></div>
+    </div>
+    <div id="detailHistory"></div>
+    <button class="btn btn-primary" id="detailCloseBtn" style="margin-top:14px;">닫기</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="nameModal" style="display:none;">
+  <div class="modal-card" style="max-height:none;">
+    <h2>✏️ 이름 수정</h2>
+    <p class="modal-sub" id="nameModalSub" style="margin-bottom:12px;"></p>
+    <input id="nameInput" type="text" placeholder="표시할 이름"
+      style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px;font-size:16px;background:var(--bg);color:var(--ink);font-family:inherit;margin-bottom:8px;" />
+    <p class="hint" style="margin:0 0 14px;">기존 이름은 '이전 이름'으로 보관돼서, 옛 닉네임으로 주문해도 계속 인식돼요.</p>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" id="nameCancelBtn" style="flex:1;">취소</button>
+      <button class="btn btn-primary" id="nameOkBtn" style="flex:1;">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="phoneModal" style="display:none;">
+  <div class="modal-card" style="max-height:none;">
+    <h2>📱 번호 등록</h2>
+    <p class="modal-sub" id="phoneModalName" style="margin-bottom:12px;"></p>
+    <input id="phoneInput" type="tel" inputmode="numeric" maxlength="4" placeholder="예: 1234"
+      style="width:100%;border:1px solid var(--line);border-radius:9px;padding:11px;font-size:16px;background:var(--bg);color:var(--ink);font-family:inherit;margin-bottom:14px;" />
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" id="phoneCancelBtn" style="flex:1;">취소</button>
+      <button class="btn btn-primary" id="phoneOkBtn" style="flex:1;">등록</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="delMemberModal" style="display:none;">
+  <div class="modal-card" style="max-height:none;">
+    <h2>회원 삭제</h2>
+    <p class="modal-sub" id="delMemberText" style="margin-bottom:16px;"></p>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" id="delMemberCancelBtn" style="flex:1;">취소</button>
+      <button class="btn btn-alert" id="delMemberOkBtn" style="flex:1;">삭제</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="resetModal" style="display:none;">
+  <div class="modal-card" style="max-height:none;">
+    <h2>🗑 목록 초기화</h2>
+    <p class="modal-sub" id="resetModalText" style="margin-bottom:16px;"></p>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" id="resetCancelBtn" style="flex:1;">취소</button>
+      <button class="btn btn-alert" id="resetOkBtn" style="flex:1;">전체 삭제</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal" style="display:none;">
+  <div class="modal-card" style="max-height:none;">
+    <h2>🔒 마감 확인</h2>
+    <p class="modal-sub" id="confirmModalText" style="margin-bottom:16px;white-space:pre-line;"></p>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" id="confirmCancelBtn" style="flex:1;">취소</button>
+      <button class="btn btn-alert" id="confirmOkBtn" style="flex:1;">마감 확정</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="closeModal" style="display:none;">
+  <div class="modal-card">
+    <h2>🔒 마감 결과</h2>
+    <p class="modal-sub" id="closeModalDate"></p>
+    <div id="closeResultsList"></div>
+    <button class="btn btn-primary" id="closeModalOkBtn" style="margin-top:14px;">확인</button>
+  </div>
+</div>
+
+<script>
+// --- 로그인/인증 ---
+const AUTH_KEY = 'bonjour_auth_token';
+let authToken = localStorage.getItem(AUTH_KEY) || null;
+
+function authHeaders(extra){
+  const h = Object.assign({}, extra||{});
+  if(authToken) h['Authorization'] = 'Bearer ' + authToken;
+  return h;
+}
+
+function forceLogout(msg){
+  authToken = null;
+  try{ localStorage.removeItem(AUTH_KEY); }catch(e){}
+  showLoginScreen(msg || '');
+}
+
+// Claude 아티팩트의 window.storage와 동일한 인터페이스를 실제 서버 API로 연결
+window.storage = {
+  async get(key){
+    const res = await fetch('/api/kv/' + encodeURIComponent(key), { headers: authHeaders(), cache: 'no-store' });
+    if(res.status === 401){ forceLogout('세션이 만료됐어요. 다시 로그인해주세요.'); throw new Error('unauthorized'); }
+    if(res.status === 404) return null;
+    if(!res.ok) throw new Error(`storage get failed (HTTP ${res.status})`);
+    return res.json(); // { key, value }
+  },
+  async set(key, value){
+    const res = await fetch('/api/kv/' + encodeURIComponent(key), {
+      method: 'PUT',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ value })
+    });
+    if(res.status === 401){ forceLogout('세션이 만료됐어요. 다시 로그인해주세요.'); throw new Error('unauthorized'); }
+    if(!res.ok) throw new Error(`storage set failed (HTTP ${res.status})`);
+    return res.json();
+  }
+};
+
+// 네트워크 순간 끊김/서버 재시작 타이밍 등 일시적 실패에 대비해, 한 번 더 재시도
+async function withRetry(fn, retries=1, delayMs=800){
+  try{
+    return await fn();
+  }catch(e){
+    if(retries <= 0) throw e;
+    await new Promise(r=>setTimeout(r, delayMs));
+    return withRetry(fn, retries-1, delayMs);
+  }
+}
+
+const $ = (s) => document.querySelector(s);
+const todayStr = () => new Date().toISOString().slice(0,10);
+
+let currentDate = todayStr();
+let orders = [];
+let noshowLog = [];
+let members = [];
+let history = {};   // { historyKey: [ {date, picked:{}, noshow:{}, cancelled:{}, name} ] }
+let campaigns = []; // [ {id, product, deadlineAt, pickupDate, note, addedAt} ]
+let postponedLog = []; // [ {name, product, fromDate, toDate, at} ] — 노쇼 로그와 쌍을 이루는 연기 로그
+let pollTimer = null;
+let lastLocalChange = 0;
+let isLoadingOrders = false;   // 로딩 중 저장/폴링 차단
+let isSavingOrders = false;    // 저장 중 폴링 차단 (저장 도중 로드가 끼어들어 변경사항이 사라지는 것 방지)
+
+$('#dateInput').value = currentDate;
+
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1600);
+}
+
+function ordersKey(date){ return `orders:${date}`; }
+function localKey(date){ return `bonjour_orders_${date}`; }
+
+// 브라우저 자체에 자동 임시저장 (서버가 죽어도 이 기기에는 남아있음)
+function localBackupSave(){
+  try{
+    localStorage.setItem(localKey(currentDate), JSON.stringify(orders));
+    localStorage.setItem('bonjour_noshow', JSON.stringify(noshowLog));
+  }catch(e){}
+}
+function localBackupLoad(date){
+  try{
+    const raw = localStorage.getItem(localKey(date));
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function localNoshowLoad(){
+  try{
+    const raw = localStorage.getItem('bonjour_noshow');
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+async function loadOrders(){
+  const loadingDate = currentDate;   // 이 로드가 어느 날짜를 위한 것인지 고정
+  isLoadingOrders = true;
+
+  let loaded = null;
+  let serverOk = false;
+  try{
+    const res = await window.storage.get(ordersKey(loadingDate), true);
+    serverOk = true;
+    loaded = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){
+    serverOk = false;
+  }
+
+  // 로드하는 동안 사용자가 날짜를 또 바꿨으면 이 결과는 버림 (엉뚱한 날짜에 반영 방지)
+  if(currentDate !== loadingDate){
+    isLoadingOrders = false;
+    return;
+  }
+
+  // 저장이 대기/진행 중이면(아직 서버에 안 올라간 로컬 변경이 있다는 뜻) 통째로 덮어쓰지 않음
+  // (여기서 덮어쓰면, 하필 이 로딩과 겹친 로컬 변경이 통째로 사라짐 — saveOrders 쪽에서 알아서
+  //  최신 orders 기준으로 다시 병합해서 저장하므로, 여기서는 그냥 이번 로딩 결과를 버리면 됨)
+  if(saveInProgress){
+    isLoadingOrders = false;
+    return;
+  }
+
+  if(serverOk){
+    orders = loaded || [];
+    migrateOrders();
+    localBackupSave();
+  }else{
+    if(orders.length === 0){
+      const local = localBackupLoad(loadingDate);
+      if(local) orders = local;
+    }
+    migrateOrders();
+  }
+  isLoadingOrders = false;
+  render();
+}
+
+// 서버 주문 배열을 '주문자 단위'로 병합 (여러 기기 동시 사용 안전)
+function mergeOrderLists(base, mine){
+  const byName = {};
+  (base||[]).forEach(o=>{ byName[o.name] = JSON.parse(JSON.stringify(o)); });
+  (mine||[]).forEach(o=>{
+    if(!byName[o.name]){ byName[o.name] = JSON.parse(JSON.stringify(o)); return; }
+    const t = byName[o.name];
+    if(o.note) t.note = o.note;
+    // 코멘트 합치기 (중복 제거)
+    const seen = new Set((t.comments||[]).map(c=>c.at+'|'+c.text));
+    (o.comments||[]).forEach(c=>{ const k=c.at+'|'+c.text; if(!seen.has(k)){ (t.comments=t.comments||[]).push(c); seen.add(k);} });
+    // 상품: 실제 갱신 시각(updatedAt)이 더 최신인 쪽을 그대로 채택
+    // ('활성 상태만 우선'했던 예전 방식은 '미처리로 되돌리기'가 저장되지 않는 버그가 있었음)
+    Object.entries(o.items||{}).forEach(([p,it])=>{
+      const cur = t.items[p];
+      if(!cur){ t.items[p] = it; return; }
+      const curTs = cur.updatedAt || 0;
+      const newTs = it.updatedAt || 0;
+      if(newTs >= curTs){ t.items[p] = it; }
+      if(t.items[p].qty < it.qty) t.items[p].qty = it.qty;      // 수량은 큰 값 유지
+    });
+  });
+  return Object.values(byName);
+}
+
+// 저장 요청이 겹치면(여러 사람을 연달아 처리할 때 등), 동시에 두 번 저장하지 않고
+// 하나가 끝난 뒤 최신 상태로 이어서 한 번 더 저장하도록 직렬화한다.
+// (겹쳐서 저장하면, 늦게 시작했지만 먼저 끝난 저장이 나중에 끝난 저장을 덮어써서
+//  방금 처리한 내용이 사라지는 경우가 있었음 — 이게 "연기했는데 표시가 안 남는" 원인이었음)
+let saveInProgress = null;
+let saveQueued = false;
+let saveQueuedDeletedName;
+
+async function saveOrders(deletedName){
+  if(deletedName) saveQueuedDeletedName = deletedName;
+
+  if(saveInProgress){
+    saveQueued = true;
+    return saveInProgress;
+  }
+
+  saveInProgress = (async () => {
+    do{
+      saveQueued = false;
+      const dn = saveQueuedDeletedName;
+      saveQueuedDeletedName = undefined;
+      // 마침 폴링 등으로 날짜 데이터를 다시 불러오는 중이면, 저장을 그냥 건너뛰지 않고
+      // 로딩이 끝날 때까지 잠깐 기다렸다가 저장한다 (건너뛰면 이 저장 요청이 통째로 사라짐)
+      let waitCount = 0;
+      while(isLoadingOrders && waitCount < 50){   // 최대 5초 정도 대기
+        await new Promise(r=>setTimeout(r, 100));
+        waitCount++;
+      }
+      await doSaveOrders(dn);
+    } while(saveQueued);
+  })();
+
+  try{
+    await saveInProgress;
+  } finally {
+    saveInProgress = null;
+  }
+}
+
+async function doSaveOrders(deletedName){
+  // 로딩 중이면 저장 금지 (이전 날짜 데이터가 새 날짜로 새는 것 방지)
+  if(isLoadingOrders) return;
+
+  const saveDate = currentDate;   // 저장 시작 시점의 날짜 고정
+  // 저장 시작 시점의 내 변경사항을 스냅샷으로 고정 (저장 도중 폴링이 orders를 바꿔도 이 변경은 안전)
+  const mySnapshot = JSON.parse(JSON.stringify(orders));
+  isSavingOrders = true;
+  localBackupSave();
+  try{
+    let serverList = [];
+    try{
+      const res = await window.storage.get(ordersKey(saveDate), true);
+      serverList = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ serverList = []; }
+
+    // 저장 준비 도중 날짜가 바뀌었으면 취소 (엉뚱한 날짜 덮어쓰기 방지)
+    if(currentDate !== saveDate){ isSavingOrders = false; return; }
+
+    // 방금 삭제한 주문은 서버 쪽 사본도 병합 전에 제거 (안 그러면 병합 시 되살아남)
+    if(deletedName) serverList = serverList.filter(o=>o.name !== deletedName);
+
+    const merged = mergeOrderLists(serverList, mySnapshot);
+    await window.storage.set(ordersKey(saveDate), JSON.stringify(merged), true);
+
+    // 저장하는 동안 또 다른 저장 요청이 들어왔다면(= 그 사이에 반영 안 된 로컬 변경이 더 있다는 뜻),
+    // 지금 이 병합 결과로 orders를 덮어쓰지 않는다. orders를 통째로 교체해버리면
+    // 그 사이에 다른 화면 조작으로 생긴 로컬 변경(아직 스냅샷에 안 담긴 것)이 통째로 사라지기 때문.
+    // 다음 반복에서 그때의 최신 orders 기준으로 다시 병합해서 반영한다.
+    if(!saveQueued){
+      orders = merged;
+    }
+  }catch(e){
+    toast('서버 저장 실패 (이 기기에는 백업됨)');
+  }
+  isSavingOrders = false;
+}
+
+async function loadNoshow(){
+  let serverOk = false;
+  let loaded = null;
+  try{
+    const res = await window.storage.get('noshow-log', true);
+    serverOk = true;
+    loaded = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){
+    serverOk = false;
+  }
+  if(serverOk){
+    // 서버 값을 신뢰 (자동 복구 제거)
+    noshowLog = loaded || [];
+  } else {
+    const local = localNoshowLoad();
+    if(noshowLog.length === 0 && local) noshowLog = local;
+  }
+  localBackupSave();
+  renderNoshow();
+}
+
+// 노쇼 기록 병합 (name+date+상품 조합으로 중복 제거)
+function mergeNoshow(base, mine){
+  const map = {};
+  const keyOf = n => n.name+'|'+n.date+'|'+JSON.stringify(n.items||{});
+  (base||[]).forEach(n=>{ map[keyOf(n)] = n; });
+  (mine||[]).forEach(n=>{ map[keyOf(n)] = n; });
+  return Object.values(map);
+}
+
+async function saveNoshow(){
+  localBackupSave();
+  try{
+    let serverList = [];
+    try{
+      const res = await window.storage.get('noshow-log', true);
+      serverList = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ serverList = []; }
+    noshowLog = mergeNoshow(serverList, noshowLog);
+    await window.storage.set('noshow-log', JSON.stringify(noshowLog), true);
+  }catch(e){
+    toast('서버 저장 실패 (이 기기에는 백업됨)');
+  }
+}
+
+/* ===================== 구매·노쇼 이력 ===================== */
+
+async function loadHistory(){
+  let serverOk=false, loaded=null;
+  try{
+    const res = await window.storage.get('history', true);
+    serverOk = true;
+    loaded = res && res.value ? JSON.parse(res.value) : {};
+  }catch(e){ serverOk=false; }
+
+  if(serverOk){
+    history = loaded || {};   // 서버 값 신뢰 (자동 복구 제거)
+    try{ localStorage.setItem('bonjour_history', JSON.stringify(history)); }catch(e){}
+  } else {
+    if(Object.keys(history).length===0){
+      try{
+        const raw = localStorage.getItem('bonjour_history');
+        if(raw) history = JSON.parse(raw);
+      }catch(e){}
+    }
+  }
+}
+
+// 이력 병합: 회원별로, 같은 날짜 레코드는 최신(내 것) 우선, 다른 날짜는 모두 보존
+function mergeHistory(base, mine){
+  const out = {};
+  for(const k of new Set([...Object.keys(base||{}), ...Object.keys(mine||{})])){
+    const byDate = {};
+    (base[k]||[]).forEach(r=>{ byDate[r.date] = r; });
+    (mine[k]||[]).forEach(r=>{ byDate[r.date] = r; }); // 내 것으로 덮되 날짜별로만
+    out[k] = Object.values(byDate);
+  }
+  return out;
+}
+
+async function saveHistory(){
+  try{ localStorage.setItem('bonjour_history', JSON.stringify(history)); }catch(e){}
+  try{
+    let serverHist = {};
+    try{
+      const res = await window.storage.get('history', true);
+      serverHist = res && res.value ? JSON.parse(res.value) : {};
+    }catch(e){ serverHist = {}; }
+    history = mergeHistory(serverHist, history);
+    await window.storage.set('history', JSON.stringify(history), true);
+  }catch(e){
+    toast('서버 저장 실패 (이 기기에는 백업됨)');
+  }
+}
+
+// 이력 키: 회원이면 회원ID, 아니면 이름
+function historyKeyFor(rawName){
+  const m = findMember(rawName);
+  return m ? ('id:'+m.id) : ('n:'+normName(rawName));
+}
+function historyKeyOfMember(m){ return 'id:'+m.id; }
+
+function getHistory(key){
+  return (history[key] || []).slice().sort((a,b)=> b.date.localeCompare(a.date));
+}
+
+// 회원의 마지막 구매일 (수령 완료 기준)
+function lastPurchaseDate(m){
+  const recs = history[historyKeyOfMember(m)] || [];
+  const dates = recs
+    .filter(r => r.picked && Object.keys(r.picked).length > 0)
+    .map(r => r.date)
+    .sort();
+  return dates.length ? dates[dates.length-1] : null;
+}
+
+function daysSince(dateStr){
+  if(!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  const now = new Date(todayStr() + 'T00:00:00');
+  return Math.round((now - d) / 86400000);
+}
+
+// 1개월(30일) 이상 미구매 여부
+function isDormant(m){
+  const last = lastPurchaseDate(m);
+  if(!last) return false;           // 이력 자체가 없으면 별도 분류
+  return daysSince(last) >= 30;
+}
+function hasNoHistory(m){
+  const recs = history[historyKeyOfMember(m)] || [];
+  return recs.filter(r=>r.picked && Object.keys(r.picked).length>0).length === 0;
+}
+
+// 회원 누적 집계
+function memberSummary(m){
+  const recs = history[historyKeyOfMember(m)] || [];
+  let buys=0, items=0, noshows=0, cancels=0;
+  recs.forEach(r=>{
+    const p = r.picked||{}, n = r.noshow||{}, c = r.cancelled||{};
+    if(Object.keys(p).length){ buys++; items += Object.values(p).reduce((s,q)=>s+q,0); }
+    if(Object.keys(n).length) noshows++;
+    if(Object.keys(c).length) cancels++;
+  });
+  return { buys, items, noshows, cancels, last: lastPurchaseDate(m) };
+}
+
+/* ===== 한글 초성/부분 검색 (ㄱ → 감사, 가 → 감사, 감 → 감사) ===== */
+const HG_CHO  = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const HG_JUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const HG_JONG = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+// 문자열을 자모 단위로 분해 ("감사" → "ㄱㅏㅁㅅㅏ")
+function toJamo(str){
+  let out = '';
+  for(const ch of (str||'')){
+    const code = ch.charCodeAt(0);
+    if(code >= 0xAC00 && code <= 0xD7A3){
+      const i = code - 0xAC00;
+      out += HG_CHO[Math.floor(i/588)];
+      out += HG_JUNG[Math.floor((i%588)/28)];
+      const j = HG_JONG[i%28];
+      if(j) out += j;
+    } else {
+      out += ch.toLowerCase();
+    }
+  }
+  return out;
+}
+
+// 초성만 추출 ("김철수" → "ㄱㅊㅅ")
+function toChosung(str){
+  let out = '';
+  for(const ch of (str||'')){
+    const c = ch.charCodeAt(0);
+    if(c >= 0xAC00 && c <= 0xD7A3) out += HG_CHO[Math.floor((c-0xAC00)/588)];
+    else out += ch.toLowerCase();
+  }
+  return out;
+}
+function isAllChosung(q){
+  return q.length > 0 && [...q].every(ch => HG_CHO.includes(ch));
+}
+
+// 회원이 검색어와 맞는지 (초성/부분음절/번호 모두 지원)
+function fuzzyMatch(m, query){
+  const q = (query||'').trim();
+  if(!q) return true;
+  const targets = [m.name].concat(m.aliases||[]);
+  if(m.phone4) targets.push(m.phone4);
+
+  // 초성만 입력한 경우 (ㄱㅊ → 김철수)
+  if(isAllChosung(q)){
+    if(targets.some(t => toChosung(t).includes(q))) return true;
+  }
+  const qj = toJamo(q);
+  return targets.some(t => toJamo(t).includes(qj)) || (m.phone4||'').includes(q);
+}
+
+/* ===== 주문 입력 자동완성 ===== */
+function renderNameSuggest(){
+  const box = $('#nameSuggest');
+  const q = $('#qName').value.trim();
+
+  if(!q || members.length === 0){
+    box.style.display = 'none';
+    return;
+  }
+  const matched = members
+    .filter(m => fuzzyMatch(m, q))
+    .sort((a,b)=>a.name.localeCompare(b.name,'ko'))
+    .slice(0, 30);
+
+  if(matched.length === 0){
+    box.style.display = 'block';
+    box.innerHTML = '<div class="suggest-empty">일치하는 회원이 없어요. 그대로 입력하면 새 주문자로 등록돼요.</div>';
+    return;
+  }
+  box.style.display = 'block';
+  box.innerHTML = matched.map(m=>{
+    const ns = memberNoshowCount(m);
+    const last = lastPurchaseDate(m);
+    const meta = [
+      last ? `최근 ${last}` : '구매이력 없음',
+      ns>0 ? `노쇼 ${ns}회` : ''
+    ].filter(Boolean).join(' · ');
+    return `<div class="suggest-item" data-pick="${attr(m.name + (m.phone4?(' '+m.phone4):''))}">
+        <div>
+          <div class="suggest-name">${m.name}${m.phone4?`<span class="phone-inline">${m.phone4}</span>`:''}</div>
+          <div class="suggest-meta">${meta}</div>
+        </div>
+        ${ns>=3?'<span class="warn-badge">⚠️</span>':''}
+      </div>`;
+  }).join('');
+}
+
+$('#qName').addEventListener('input', renderNameSuggest);
+$('#qName').addEventListener('focus', renderNameSuggest);
+
+$('#nameSuggest').addEventListener('click', (e)=>{
+  const item = e.target.closest('[data-pick]');
+  if(!item) return;
+  $('#qName').value = item.dataset.pick;
+  $('#nameSuggest').style.display = 'none';
+  $('#qProduct').focus();
+});
+
+// 주문자가 검색어와 맞는지 (초성/부분음절/번호 모두 지원)
+function orderMatches(o, query){
+  const q = (query||'').trim();
+  if(!q) return true;
+
+  const p = parseNameLine(o.name);
+  const m = findMember(o.name);
+
+  const targets = [o.name];
+  if(p && p.name) targets.push(p.name);
+  if(p && p.phone4) targets.push(p.phone4);
+  if(m){
+    targets.push(m.name);
+    if(m.phone4) targets.push(m.phone4);
+    (m.aliases||[]).forEach(a=>targets.push(a));
+  }
+
+  // 초성만 입력한 경우 (ㄱㅅ → 감사)
+  if(isAllChosung(q)){
+    if(targets.some(t => toChosung(t).includes(q))) return true;
+  }
+  const qj = toJamo(q);
+  return targets.some(t => toJamo(t).includes(qj))
+      || targets.some(t => String(t).includes(q));
+}
+
+// 메인 검색 시 회원 명단 기반 바로가기 제안
+function renderSearchSuggest(){
+  const box = $('#searchSuggest');
+  if(!box) return;
+  const q = $('#searchInput').value.trim();
+
+  if(!q || members.length === 0){
+    box.style.display = 'none';
+    return;
+  }
+  // 이미 정확히 한 명만 남았으면 제안 불필요
+  const matchedOrders = orders.filter(o => orderMatches(o, q));
+  if(matchedOrders.length === 1){
+    box.style.display = 'none';
+    return;
+  }
+
+  const matched = members.filter(m => fuzzyMatch(m, q)).slice(0, 12);
+  if(matched.length === 0){
+    box.style.display = 'none';
+    return;
+  }
+
+  box.style.display = 'flex';
+  box.innerHTML = '<div class="sg-label">👤 회원 명단에서 찾기</div>' +
+    matched.map(m=>{
+      const hasOrder = orders.some(o => findMember(o.name) === m);
+      return `<span class="sg-chip ${hasOrder?'ordered':''}" data-pickname="${attr(m.name)}">
+          ${m.name}${m.phone4?`<span class="sg-ph">${m.phone4}</span>`:''}${hasOrder?' ✓':''}
+        </span>`;
+    }).join('');
+}
+
+$('#searchSuggest') && $('#searchSuggest').addEventListener('click', (e)=>{
+  const chip = e.target.closest('[data-pickname]');
+  if(!chip) return;
+  $('#searchInput').value = chip.dataset.pickname;
+  render();
+  renderSearchSuggest();
+});
+
+/* ===== 회원 관리 ===== */
+
+async function loadMembers(){
+  let serverOk = false, loaded = null;
+  try{
+    const res = await window.storage.get('members', true);
+    serverOk = true;
+    loaded = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){ serverOk = false; }
+
+  if(serverOk){
+    members = loaded || [];   // 서버 값 신뢰 (자동 복구 제거)
+    try{ localStorage.setItem('bonjour_members', JSON.stringify(members)); }catch(e){}
+  } else {
+    if(members.length === 0){
+      try{
+        const raw = localStorage.getItem('bonjour_members');
+        if(raw) members = JSON.parse(raw);
+      }catch(e){}
+    }
+  }
+  renderMembers();
+}
+
+// 회원 병합 (id 기준, 내 변경 우선)
+function mergeMembers(base, mine){
+  const map = {};
+  (base||[]).forEach(m=>{ map[m.id] = m; });
+  (mine||[]).forEach(m=>{ map[m.id] = m; });  // 같은 id는 내 것으로 갱신
+  return Object.values(map);
+}
+
+async function saveMembers(){
+  try{ localStorage.setItem('bonjour_members', JSON.stringify(members)); }catch(e){}
+  try{
+    let serverList = [];
+    try{
+      const res = await window.storage.get('members', true);
+      serverList = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ serverList = []; }
+    members = mergeMembers(serverList, members);
+    await window.storage.set('members', JSON.stringify(members), true);
+  }catch(e){
+    toast('서버 저장 실패 (이 기기에는 백업됨)');
+  }
+}
+
+/* ===================== 캠페인(공동구매 일정) ===================== */
+
+async function loadCampaigns(){
+  try{
+    const res = await window.storage.get('campaigns', true);
+    campaigns = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){
+    // 실패해도 화면에 있던 값 유지 (덮어쓰지 않음)
+  }
+}
+
+function mergeCampaigns(base, mine){
+  const map = {};
+  (base||[]).forEach(c=>{ map[c.id] = c; });
+  (mine||[]).forEach(c=>{ map[c.id] = c; });  // 같은 id는 내 것으로 갱신 (삭제는 mine에 없으면 base가 남음 — 아래 deleteCampaign에서 별도 처리)
+  return Object.values(map);
+}
+
+async function saveCampaigns(deletedId){
+  try{
+    let serverList = [];
+    try{
+      const res = await window.storage.get('campaigns', true);
+      serverList = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ serverList = []; }
+    if(deletedId) serverList = serverList.filter(c=>c.id !== deletedId); // 삭제 항목은 병합 전에 제거 (되살아남 방지)
+    campaigns = mergeCampaigns(serverList, campaigns);
+    await window.storage.set('campaigns', JSON.stringify(campaigns), true);
+  }catch(e){
+    toast('서버 저장 실패');
+  }
+}
+
+let campMode = 'time';   // 'time' | 'qty'
+document.querySelectorAll('.modebtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    campMode = btn.dataset.campmode;
+    document.querySelectorAll('.modebtn').forEach(b=>b.classList.toggle('active', b.dataset.campmode===campMode));
+    $('#campModeTime').style.display = campMode==='time' ? '' : 'none';
+    $('#campModeQty').style.display = campMode==='qty' ? '' : 'none';
+  });
+});
+
+// 픽업일을 고를 때, 그 날짜에 이미 연기로 들어온 같은 상품 수량이 있으면 미리 알려줌
+async function checkCampPostponeWarn(){
+  const date = $('#campPickup').value;
+  const product = $('#campProduct').value.trim();
+  const el = $('#campPostponeWarn');
+  if(!date || !product){ el.style.display = 'none'; return; }
+
+  let list = [];
+  try{
+    const res = await window.storage.get(ordersKey(date), true);
+    list = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){ el.style.display = 'none'; return; }
+
+  let qty = 0;
+  const fromDates = new Set();
+  list.forEach(o=>{
+    const it = o.items && o.items[product];
+    if(!it) return;
+    const nit = normalizeItem(it);
+    if(nit.fromPostpone && nit.status !== 'cancelled'){
+      qty += nit.qty;
+      fromDates.add(nit.fromPostpone);
+    }
+  });
+
+  if(qty > 0){
+    el.className = 'camp-warn';
+    el.style.display = 'block';
+    el.textContent = `⚠️ ${date}에 "${product}" 연기유입 예약이 이미 ${qty}개 있어요 (${[...fromDates].join(', ')}에서 연기됨). 총 수량에 포함해서 입력해주세요.`;
+  } else {
+    el.style.display = 'none';
+  }
+}
+$('#campPickup').addEventListener('change', checkCampPostponeWarn);
+$('#campProduct').addEventListener('change', checkCampPostponeWarn);
+
+function campaignDdayLabel(c){
+  if(c.mode === 'qty'){
+    const total = c.totalQty || 0;
+    const sold = c.soldQty || 0;
+    return `${sold}/${total}`;
+  }
+  if(!c.deadlineAt) return '';
+  const diff = new Date(c.deadlineAt).getTime() - Date.now();
+  if(diff <= 0) return '마감';
+  const days = Math.floor(diff / 86400000);
+  if(days === 0) return '오늘마감';
+  return 'D-' + days;
+}
+
+function renderCampaigns(){
+  $('#campCount').textContent = campaigns.length ? `(${campaigns.length}건)` : '';
+  const list = $('#campList');
+  if(campaigns.length === 0){
+    list.innerHTML = '<div class="empty">등록된 캠페인이 없습니다</div>';
+    return;
+  }
+  list.innerHTML = campaigns
+    .slice()
+    .sort((a,b)=> (a.deadlineAt||'').localeCompare(b.deadlineAt||''))
+    .map(c=>{
+      const thumb = c.imageUrl
+        ? `<img src="${c.imageUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;margin-right:10px;flex-shrink:0;" />`
+        : '';
+      let subLine;
+      if(c.mode === 'qty'){
+        subLine = `수량 기준 · 픽업예정 ${c.pickupDate||'미설정'}${c.note?(' · '+c.note):''}`;
+      } else {
+        const dt = c.deadlineAt ? new Date(c.deadlineAt) : null;
+        const deadlineTxt = dt ? dt.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '미설정';
+        subLine = `마감 ${deadlineTxt} · 픽업예정 ${c.pickupDate||'미설정'}${c.note?(' · '+c.note):''}`;
+      }
+      const qtyEditor = c.mode === 'qty'
+        ? `<div class="row" style="margin-top:8px;">
+             <input type="number" min="0" max="${c.totalQty||0}" value="${c.soldQty||0}" data-act="soldqty" data-id="${c.id}" style="max-width:100px;" />
+             <span class="hint" style="align-self:center;margin:0;">/ ${c.totalQty||0}개 판매됨</span>
+           </div>`
+        : '';
+      return `
+      <div class="member-row" style="flex-wrap:wrap;">
+        ${thumb}
+        <div class="member-info">
+          <div class="member-name">${c.product} <span class="dormant-badge">${campaignDdayLabel(c)}</span></div>
+          <div class="member-sub">${subLine}</div>
+          ${qtyEditor}
+        </div>
+        <div class="member-actions">
+          <button class="mini-btn" data-act="delcamp" data-id="${c.id}">삭제</button>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+$('#campList').addEventListener('change', async (e)=>{
+  const input = e.target.closest('[data-act="soldqty"]');
+  if(!input) return;
+  const c = campaigns.find(x=>x.id===input.dataset.id);
+  if(!c) return;
+  let v = parseInt(input.value, 10);
+  if(isNaN(v) || v < 0) v = 0;
+  if(c.totalQty && v > c.totalQty) v = c.totalQty;
+  c.soldQty = v;
+  input.value = v;
+  await saveCampaigns();
+  renderCampaigns();
+  toast('판매 수량이 갱신됐어요');
+});
+
+/* 상품 사진: 선택 즉시 브라우저에서 축소해 데이터URL로 보관 (별도 이미지 서버 불필요) */
+let pendingCampImage = '';
+
+function downscaleImage(file, maxDim){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = ()=>{ img.src = reader.result; };
+    reader.onerror = reject;
+    img.onload = ()=>{
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.78));
+    };
+    img.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+$('#campImageInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ toast('이미지 파일을 선택해주세요'); return; }
+  try{
+    pendingCampImage = await downscaleImage(file, 480);
+    $('#campImagePreview').src = pendingCampImage;
+    $('#campImagePreview').style.display = 'block';
+    $('#campImageClearBtn').style.display = 'inline-block';
+  }catch(err){
+    toast('사진을 처리하지 못했어요');
+  }
+});
+$('#campImageClearBtn').addEventListener('click', ()=>{
+  pendingCampImage = '';
+  $('#campImageInput').value = '';
+  $('#campImagePreview').style.display = 'none';
+  $('#campImageClearBtn').style.display = 'none';
+});
+
+$('#campAddBtn').addEventListener('click', async ()=>{
+  const product = $('#campProduct').value.trim();
+  const pickupDate = $('#campPickup').value;
+  const note = $('#campNote').value.trim();
+  if(!product){ toast('상품명을 입력해주세요'); return; }
+
+  const camp = {
+    id: 'c'+Date.now()+Math.random().toString(16).slice(2,6),
+    product,
+    mode: campMode,
+    pickupDate: pickupDate || '',
+    note,
+    imageUrl: pendingCampImage || '',
+    addedAt: todayStr()
+  };
+
+  if(campMode === 'qty'){
+    const total = parseInt($('#campTotalQty').value, 10);
+    if(!total || total <= 0){ toast('총 수량을 입력해주세요'); return; }
+    camp.totalQty = total;
+    camp.soldQty = 0;   // 새 캠페인은 항상 0부터 시작, 이후 판매될 때마다 아래 목록에서 갱신
+  } else {
+    const deadlineRaw = $('#campDeadline').value;
+    if(!deadlineRaw){ toast('마감 시각을 선택해주세요'); return; }
+    camp.deadlineAt = new Date(deadlineRaw).toISOString();
+  }
+
+  campaigns.push(camp);
+  await saveCampaigns();
+  renderCampaigns();
+  $('#campProduct').value=''; $('#campDeadline').value=''; $('#campPickup').value=''; $('#campNote').value='';
+  $('#campTotalQty').value='';
+  $('#campImageInput').value=''; $('#campImagePreview').style.display='none'; $('#campImageClearBtn').style.display='none';
+  $('#campPostponeWarn').style.display='none';
+  pendingCampImage = '';
+  toast('캠페인이 등록됐어요');
+});
+
+let delCampTarget = null;
+$('#campList').addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-act="delcamp"]');
+  if(!btn) return;
+  const c = campaigns.find(x=>x.id===btn.dataset.id);
+  if(!c) return;
+  delCampTarget = c;
+  $('#delCampText').textContent = `"${c.product}" 캠페인을 삭제할까요?`;
+  $('#delCampModal').style.display = 'flex';
+});
+$('#delCampCancelBtn').addEventListener('click', ()=>{
+  delCampTarget = null;
+  $('#delCampModal').style.display = 'none';
+});
+$('#delCampOkBtn').addEventListener('click', async ()=>{
+  $('#delCampModal').style.display = 'none';
+  if(!delCampTarget) return;
+  const id = delCampTarget.id;
+  delCampTarget = null;
+  campaigns = campaigns.filter(c=>c.id!==id);
+  renderCampaigns();
+  await saveCampaigns(id);
+});
+
+/* ===================== 연기 로그 (노쇼 로그와 쌍) ===================== */
+
+async function appendPostponedLog(entry){
+  try{
+    let serverList = [];
+    try{
+      const res = await window.storage.get('postponed-log', true);
+      serverList = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ serverList = []; }
+    serverList.push(entry);
+    postponedLog = serverList;
+    await window.storage.set('postponed-log', JSON.stringify(serverList), true);
+  }catch(e){
+    // 로그 실패해도 실제 연기 처리는 이미 됐으니 조용히 무시
+  }
+}
+
+// 이름 비교용 정규화 (공백/대소문자 무시)
+function normName(s){ return (s||'').replace(/\s+/g,'').toLowerCase(); }
+
+// "김철수 1234", "이영희(5678)", "과일러버" 등을 분해
+function parseNameLine(line){
+  let s = (line||'').trim();
+  if(!s) return null;
+  if(/^봉주르/.test(s)) return null; // 내 계정 제외
+
+  // 괄호형: 김철수(1234) / 김철수[1234]
+  let m = s.match(/^(.+?)\s*[\(\[]\s*(\d{4})\s*[\)\]]\s*$/);
+  if(m) return { name: m[1].trim(), phone4: m[2] };
+
+  // 구분자형: 김철수 1234 / 김철수-1234 / 김철수,1234
+  m = s.match(/^(.+?)[\s\/\-_,·|]+(\d{4})\s*$/);
+  if(m) return { name: m[1].trim(), phone4: m[2] };
+
+  // 붙어있는형: 김철수1234
+  m = s.match(/^(.+?)(\d{4})\s*$/);
+  if(m && m[1].trim().length > 0) return { name: m[1].trim(), phone4: m[2] };
+
+  return { name: s, phone4: null };
+}
+
+// 회원 고유키: 닉네임 + 번호 조합 (번호가 같아도 닉네임이 다르면 다른 사람)
+function memberKey(m){
+  return normName(m.name) + '|' + (m.phone4 || '');
+}
+
+// 주문자명으로 회원 찾기 — 닉네임+번호 조합이 정확히 일치할 때만 연결
+// (번호 뒷 4자리는 겹치는 사람이 흔해서, 번호만 같고 이름이 다르면 절대 자동으로 연결하지 않음)
+function findMember(rawName){
+  const p = parseNameLine(rawName);
+  if(!p) return null;
+  const n = normName(p.name);
+
+  if(p.phone4){
+    const exact = members.find(m => m.phone4 === p.phone4 &&
+      (normName(m.name) === n || (m.aliases||[]).some(a=>normName(a)===n)));
+    return exact || null;   // 번호만 같고 이름이 다르면 다른 사람일 가능성이 높으므로 매칭하지 않음
+  }
+
+  // 번호 없이 이름만 들어온 경우
+  const byName = members.filter(m =>
+    normName(m.name) === n || (m.aliases||[]).some(a=>normName(a)===n)
+  );
+  return byName.length === 1 ? byName[0] : (byName[0] || null);
+}
+
+// 회원 추가 (닉네임+번호 조합이 같으면 건너뜀). 반환: 'added' | 'updated' | 'skipped'
+// src: 'kakao'(명단 붙여넣기) | 'manual'(수기 입력)
+function upsertMember(name, phone4, src){
+  name = (name||'').trim();
+  if(!name) return 'skipped';
+  src = src || 'kakao';
+  const n = normName(name);
+
+  // 닉네임 + 번호 조합이 완전히 같으면 중복
+  const exact = members.find(m => normName(m.name) === n && (m.phone4||'') === (phone4||''));
+  if(exact) return 'skipped';
+
+  // 번호 없던 같은 닉네임 회원에게 번호가 생긴 경우 → 승급
+  if(phone4){
+    const sameNameNoPhone = members.find(m => normName(m.name) === n && !m.phone4);
+    if(sameNameNoPhone){
+      sameNameNoPhone.phone4 = phone4;
+      sameNameNoPhone.phoneSource = src;
+      return 'updated';
+    }
+  }
+
+  // 이전 이름으로 등록된 회원인지 확인 (번호까지 같을 때만)
+  if(phone4){
+    const byAlias = members.find(m => m.phone4 === phone4 && (m.aliases||[]).some(a=>normName(a)===n));
+    if(byAlias) return 'skipped';
+  }
+
+  members.push({
+    id:'m'+Date.now()+Math.random().toString(16).slice(2,6),
+    name, phone4: phone4||null, phoneSource: phone4?src:null,
+    aliases:[], addedAt: todayStr(), memo:''
+  });
+  return 'added';
+}
+
+// 회원 표시명 (동명이인 구분)
+function memberLabel(m){
+  return m.phone4 ? `${m.name}(${m.phone4})` : m.name;
+}
+
+// 표시용 이름: 관리명단에 등록된 이름을 우선 사용
+function displayName(rawName){
+  const m = findMember(rawName);
+  return m ? m.name : rawName;
+}
+
+// 표시용 이름 + 원래 카톡 닉네임(다를 때만)
+function displayNameInfo(rawName){
+  const p = parseNameLine(rawName);
+  const rawShown = p ? p.name : rawName;
+  const m = findMember(rawName);
+  if(!m) return { name: rawShown, orig: null, member: null, phone4: p ? p.phone4 : null };
+  const differs = normName(m.name) !== normName(rawShown);
+  return { name: m.name, orig: differs ? rawShown : null, member: m, phone4: m.phone4 || (p?p.phone4:null) };
+}
+
+// 해당 회원의 노쇼 횟수 — 이름(또는 이전 이름)이 일치해야 하고,
+// 번호가 둘 다 있는데 서로 다르면 동명이인일 수 있으므로 제외
+function memberNoshowCount(m){
+  if(!m) return 0;
+  const names = [m.name].concat(m.aliases||[]).map(normName);
+  return noshowLog.filter(n => {
+    const p = parseNameLine(n.name);
+    if(!p) return false;
+    if(!names.includes(normName(p.name))) return false;
+    if(m.phone4 && p.phone4 && m.phone4 !== p.phone4) return false;
+    return true;
+  }).length;
+}
+
+function findOrGroupByName(name){
+  return orders.find(o => o.name === name.trim());
+}
+
+function addItem(name, product, qty, note){
+  name = name.trim();
+  if(!name || !product.trim() || !qty || qty <= 0) return false;
+  let o = findOrGroupByName(name);
+  if(!o){
+    o = { id: Date.now()+Math.random().toString(16).slice(2), name, items:{}, note: note||'', comments:[] };
+    orders.push(o);
+  }
+  if(!o.comments) o.comments = [];
+  const p = product.trim();
+  const prev = o.items[p];
+  const prevCancelled = prev && (normalizeItem(prev).status === 'cancelled');
+  // 취소된 상품에 다시 주문이 들어오면, 예전 수량/상태를 이어받지 않고 새 주문으로 취급
+  const prevQty = (prev && !prevCancelled) ? prev.qty : 0;
+  o.items[p] = { qty: prevQty + Number(qty), status:'none', at:null, updatedAt: Date.now(), picked:false, pickedAt:null, cancelled:false };
+  if(note) o.note = note;
+  return true;
+}
+
+$('#addOneBtn').addEventListener('click', async ()=>{
+  const name = $('#qName').value;
+  const product = $('#qProduct').value;
+  const qty = parseInt($('#qQty').value, 10);
+  const note = $('#qNote').value;
+  if(addItem(name, product, qty, note)){
+    lastLocalChange = Date.now();
+    await saveOrders();
+    $('#qName').value=''; $('#qProduct').value=''; $('#qQty').value=''; $('#qNote').value='';
+    $('#nameSuggest').style.display='none';
+    render();
+    toast('주문이 추가됐어요');
+    switchTab('list');
+  } else {
+    toast('이름/상품/수량을 확인해주세요');
+  }
+});
+
+$('#bulkAddBtn').addEventListener('click', async ()=>{
+  const raw = $('#bulkInput').value.trim();
+  if(!raw){ toast('붙여넣을 내용이 없어요'); return; }
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  let count = 0;
+  lines.forEach(line=>{
+    const parts = line.split(',').map(s=>s.trim());
+    if(parts.length < 3) return;
+    const [name, product, qtyStr, note] = parts;
+    const qty = parseInt(qtyStr, 10);
+    if(addItem(name, product, qty, note)) count++;
+  });
+  if(count > 0){
+    lastLocalChange = Date.now();
+    await saveOrders();
+    $('#bulkInput').value = '';
+    render();
+    toast(`${count}건 추가됐어요`);
+    switchTab('list');
+  } else {
+    toast('형식을 확인해주세요 (이름,상품,수량)');
+  }
+});
+
+/* ===== 아이템 상태: none(미처리) / picked(수령) / noshow(노쇼) / postponed(연기) / cancelled(취소) ===== */
+const STATUS_LABEL = { none:'미처리', picked:'수령', noshow:'노쇼', postponed:'연기', cancelled:'취소' };
+
+// 기존 데이터(picked/cancelled 방식) 자동 변환
+function normalizeItem(it){
+  if(!it.status){
+    it.status = it.cancelled ? 'cancelled' : (it.picked ? 'picked' : 'none');
+    it.at = it.pickedAt || it.cancelledAt || null;
+  }
+  if(typeof it.updatedAt !== 'number') it.updatedAt = 0;  // 예전 데이터는 가장 오래된 것으로 취급 (병합 비교용)
+  return it;
+}
+function migrateOrders(){
+  orders.forEach(o=>{
+    if(!o.comments) o.comments = [];
+    Object.values(o.items||{}).forEach(normalizeItem);
+  });
+}
+function st(it){ return normalizeItem(it).status || 'none'; }
+
+function activeItems(o){
+  // 취소되지 않은 아이템만 (연기·노쇼·미처리는 여전히 관리 대상)
+  return Object.entries(o.items).filter(([,it])=>st(it) !== 'cancelled');
+}
+
+function allItemsPicked(o){
+  const entries = activeItems(o);
+  return entries.length > 0 && entries.every(([,it])=>st(it)==='picked');
+}
+
+function isFullyCancelled(o){
+  const entries = Object.values(o.items);
+  return entries.length > 0 && entries.every(it=>st(it)==='cancelled');
+}
+
+function unpickedItemsMap(o){
+  const map = {};
+  activeItems(o).forEach(([p,it])=>{
+    if(st(it) !== 'picked') map[p] = it.qty;
+  });
+  return map;
+}
+
+// 특정 상태의 아이템만 추출
+function itemsByStatus(o, status){
+  const map = {};
+  Object.entries(o.items).forEach(([p,it])=>{
+    if(st(it) === status) map[p] = it.qty;
+  });
+  return map;
+}
+
+// 상태 지정 (같은 버튼 다시 누르면 미처리로 해제)
+async function setItemStatus(id, product, status){
+  const o = orders.find(x=>x.id===id);
+  if(!o || !o.items[product]) return;
+  const it = normalizeItem(o.items[product]);
+
+  // 연기는 날짜 선택이 필요 (이미 연기 상태면 해제)
+  if(status === 'postponed' && it.status !== 'postponed'){
+    openPostponeModal(o, product);
+    return;
+  }
+  if(status === 'postponed' && it.status === 'postponed'){
+    await undoPostpone(o, product);
+    return;
+  }
+
+  const linkKey = it.postponeKey;         // 연기로 연결된 항목인지 (연기한 쪽 / 연기받은 쪽 둘 다 이 값을 가짐)
+  const linkedDate = it.fromPostpone || it.postponedTo; // 반대쪽이 있는 날짜
+
+  it.status = (it.status === status) ? 'none' : status;
+  it.at = (it.status === 'none') ? null : new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  it.updatedAt = Date.now();   // 병합 시 '가장 최근 변경'을 정확히 가리기 위한 실제 시각
+  // 레거시 필드 동기화
+  it.picked = it.status === 'picked';
+  it.cancelled = it.status === 'cancelled';
+  render();
+  renderCancel();
+  lastLocalChange = Date.now();
+  await saveOrders();
+
+  // 연기로 연결된 항목이면, 반대쪽 날짜의 사본에도 같은 상태를 반영 (미처리로 되돌리는 것도 포함 — 유령처럼 남는 것 방지)
+  if(linkKey && linkedDate){
+    await syncLinkedPostponeStatus(linkedDate, linkKey, it.status, it.at);
+  }
+}
+
+// 연기로 연결된 반대쪽 날짜의 항목에도 동일한 상태를 반영
+async function syncLinkedPostponeStatus(linkedDate, postponeKey, newStatus, atStr){
+  try{
+    const res = await window.storage.get(ordersKey(linkedDate), true);
+    let list = res && res.value ? JSON.parse(res.value) : [];
+    let changed = false;
+    list.forEach(o=>{
+      Object.keys(o.items||{}).forEach(p=>{
+        const li = o.items[p];
+        if(li && li.postponeKey === postponeKey){
+          li.status = newStatus;
+          li.at = atStr;
+          li.updatedAt = Date.now();
+          li.picked = newStatus === 'picked';
+          li.cancelled = newStatus === 'cancelled';
+          changed = true;
+        }
+      });
+    });
+    if(changed){
+      await window.storage.set(ordersKey(linkedDate), JSON.stringify(list), true);
+      if(currentDate === linkedDate) await loadOrders();  // 지금 보고 있는 화면이 반대쪽 날짜면 즉시 반영
+    }
+  }catch(e){}
+}
+
+/* ===== 연기 처리 ===== */
+let postponeCtx = null;   // { orderId, product }
+
+function openPostponeModal(o, product){
+  postponeCtx = { orderId:o.id, product };
+  const info = displayNameInfo(o.name);
+  const it = o.items[product];
+  $('#postponeSub').textContent = `${info.name} · ${product} ${it.qty}개`;
+
+  // 기본값: 내일
+  const t = new Date(currentDate + 'T00:00:00');
+  t.setDate(t.getDate() + 1);
+  $('#postponeDate').value = t.toISOString().slice(0,10);
+  $('#postponeDate').min = currentDate;
+
+  // 빠른 선택 버튼
+  $('#quickDates').innerHTML = [1,2,3,7].map(d=>{
+    const dt = new Date(currentDate + 'T00:00:00');
+    dt.setDate(dt.getDate() + d);
+    const ds = dt.toISOString().slice(0,10);
+    const label = d===1 ? '내일' : (d===7 ? '일주일 뒤' : `${d}일 뒤`);
+    return `<button class="mini-btn" data-quick="${ds}">${label}</button>`;
+  }).join('');
+
+  $('#postponeModal').style.display = 'flex';
+}
+
+$('#quickDates') && $('#quickDates').addEventListener('click', (e)=>{
+  const b = e.target.closest('[data-quick]');
+  if(b) $('#postponeDate').value = b.dataset.quick;
+});
+
+$('#postponeCancelBtn').addEventListener('click', ()=>{
+  postponeCtx = null;
+  $('#postponeModal').style.display = 'none';
+});
+
+let postponeInFlight = false;
+$('#postponeOkBtn').addEventListener('click', async ()=>{
+  if(postponeInFlight) return;   // 연타/중복 제출 방지
+  const target = $('#postponeDate').value;
+  if(!target){ toast('날짜를 선택해주세요'); return; }
+  if(target <= currentDate){ toast('오늘 이후 날짜를 선택해주세요'); return; }
+  if(!postponeCtx) return;
+
+  const { orderId, product } = postponeCtx;
+  postponeCtx = null;
+  postponeInFlight = true;
+  $('#postponeOkBtn').disabled = true;
+  $('#postponeModal').style.display = 'none';
+
+  const o = orders.find(x=>x.id===orderId);
+  if(!o || !o.items[product]){ postponeInFlight = false; $('#postponeOkBtn').disabled = false; return; }
+  const it = normalizeItem(o.items[product]);
+
+  // 이 연기 건의 고유 키 (같은 건이 중복 제출돼도 대상 날짜에서 덧셈되지 않고 교체되도록)
+  const postponeKey = it.postponeKey || (orderId + '|' + product + '|' + currentDate + '|' + Date.now());
+
+  // 1) 원래 날짜: 연기 표시 (내역 그대로 남김)
+  it.status = 'postponed';
+  it.postponedTo = target;
+  it.postponeKey = postponeKey;
+  it.at = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  it.updatedAt = Date.now();
+  it.picked = false;
+  it.cancelled = false;
+
+  render();
+  lastLocalChange = Date.now();
+  await saveOrders();
+
+  // 2) 연기된 날짜에 주문 생성 (재고 확보용) — postponeKey로 중복 방지
+  const result = await addToDate(target, o.name, product, it.qty, currentDate, o.note, postponeKey);
+  if(result.ok){
+    toast(`${target}로 연기됐어요`);
+  } else {
+    toast(`연기 표시는 됐지만 대상 날짜 저장에 실패했어요 (${result.reason})`);
+    showPostponeRetryBanner(target, o.name, product, it.qty, currentDate, o.note, postponeKey);
+  }
+
+  // 3) 연기 로그에도 기록 (매장 화면 '지각' 명단용, 노쇼 로그와 동일한 방식)
+  await appendPostponedLog({
+    name: displayName(o.name),
+    product,
+    fromDate: currentDate,
+    toDate: target,
+    at: new Date().toISOString(),
+    postponeKey
+  });
+
+  postponeInFlight = false;
+  $('#postponeOkBtn').disabled = false;
+  loadWeekPostponeSummary();
+});
+
+/* ===== 연기 대상 날짜 저장 실패 시 수동 재시도 배너 ===== */
+let pendingRetry = null;
+
+function showPostponeRetryBanner(target, rawName, product, qty, fromDate, note, postponeKey){
+  pendingRetry = { target, rawName, product, qty, fromDate, note, postponeKey };
+  $('#postponeRetryText').textContent = `⚠️ ${displayName(rawName)}님의 "${product}" ${target} 저장 실패 — 다시 시도해주세요`;
+  $('#postponeRetryBanner').style.display = 'flex';
+}
+
+$('#postponeRetryBtn').addEventListener('click', async ()=>{
+  if(!pendingRetry) return;
+  const r = pendingRetry;
+  $('#postponeRetryBtn').disabled = true;
+  const result = await addToDate(r.target, r.rawName, r.product, r.qty, r.fromDate, r.note, r.postponeKey);
+  $('#postponeRetryBtn').disabled = false;
+  if(result.ok){
+    toast(`${r.target}로 연기됐어요`);
+    pendingRetry = null;
+    $('#postponeRetryBanner').style.display = 'none';
+    loadWeekPostponeSummary();
+  } else {
+    toast(`여전히 실패했어요 (${result.reason})`);
+  }
+});
+$('#postponeRetryDismiss').addEventListener('click', ()=>{
+  pendingRetry = null;
+  $('#postponeRetryBanner').style.display = 'none';
+});
+
+// 다른 날짜의 주문서에 항목 추가 (현재 화면은 그대로 유지)
+async function addToDate(date, rawName, product, qty, fromDate, note, postponeKey){
+  try{
+    let target = [];
+    try{
+      const res = await window.storage.get(ordersKey(date), true);
+      target = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ target = []; }
+
+    // 같은 연기 건이 이미 이 날짜에 들어와 있으면 먼저 제거 (재시도해도 중복 누적 방지)
+    if(postponeKey){
+      target.forEach(o=>{
+        Object.keys(o.items||{}).forEach(p=>{
+          if(o.items[p] && o.items[p].postponeKey === postponeKey) delete o.items[p];
+        });
+      });
+      target = target.filter(o => Object.keys(o.items||{}).length > 0);
+    }
+
+    let t = target.find(x => x.name === rawName);
+    if(!t){
+      t = { id: Date.now()+Math.random().toString(16).slice(2), name: rawName, items:{}, note: note||'', comments:[] };
+      target.push(t);
+    }
+    const prev = t.items[product];
+    t.items[product] = {
+      qty: (prev ? prev.qty : 0) + qty,
+      status: 'none',
+      at: null,
+      updatedAt: Date.now(),
+      picked: false,
+      cancelled: false,
+      fromPostpone: fromDate,      // 연기되어 넘어온 주문 표시
+      postponeKey: postponeKey || null
+    };
+    try{
+      await withRetry(()=>window.storage.set(ordersKey(date), JSON.stringify(target), true), 1, 800);
+    }catch(setErr){
+      console.error('addToDate 저장 실패:', setErr);
+      return { ok:false, reason: setErr.message || '알 수 없는 오류' };
+    }
+    if(currentDate === date) await loadOrders();   // 지금 보고 있는 화면이 대상 날짜면 즉시 반영
+    return { ok:true };
+  }catch(e){
+    console.error('addToDate 실패:', e);
+    return { ok:false, reason: e.message || '알 수 없는 오류' };
+  }
+}
+
+// 연기 해제: 표시 해제 + 대상 날짜에서 제거
+async function undoPostpone(o, product){
+  const it = normalizeItem(o.items[product]);
+  const target = it.postponedTo;
+  const postponeKey = it.postponeKey;
+
+  it.status = 'none';
+  it.at = null;
+  it.updatedAt = Date.now();   // 이 값이 없으면 병합 시 서버의 예전 '연기' 상태가 되살아남
+  it.picked = false;
+  it.cancelled = false;
+  delete it.postponedTo;
+  delete it.postponeKey;
+
+  render();
+  lastLocalChange = Date.now();
+  await saveOrders();
+
+  let targetCleanupFailed = false;
+  if(target){
+    try{
+      const res = await window.storage.get(ordersKey(target), true);
+      let list = res && res.value ? JSON.parse(res.value) : [];
+      list.forEach(t=>{
+        Object.keys(t.items||{}).forEach(p=>{
+          const match = postponeKey
+            ? t.items[p].postponeKey === postponeKey
+            : (t.name === o.name && p === product && t.items[p].fromPostpone === currentDate);
+          if(match) delete t.items[p];
+        });
+      });
+      list = list.filter(t => Object.keys(t.items||{}).length > 0);
+      await withRetry(()=>window.storage.set(ordersKey(target), JSON.stringify(list), true), 1, 800);
+      // 현재 보고 있는 날짜가 대상 날짜면 즉시 반영
+      if(currentDate === target) await loadOrders();
+    }catch(e){
+      console.error('연기 해제 - 대상 날짜 정리 실패:', e);
+      targetCleanupFailed = true;
+    }
+  }
+
+  // 연기 로그에서도 이 건 제거 (매장 화면 '지각' 명단에서 사라지도록)
+  if(postponeKey){
+    try{
+      const res = await window.storage.get('postponed-log', true);
+      let log = res && res.value ? JSON.parse(res.value) : [];
+      log = log.filter(l => l.postponeKey !== postponeKey);
+      postponedLog = log;
+      await window.storage.set('postponed-log', JSON.stringify(log), true);
+    }catch(e){}
+  }
+
+  if(targetCleanupFailed){
+    toast(`연기는 해제됐지만 ${target} 쪽 정리에는 실패했어요. 새로고침 후 확인해주세요.`);
+  } else {
+    toast('연기가 해제됐어요');
+  }
+  loadWeekPostponeSummary();
+}
+
+/* ===== 지난 미수령 조회: 날짜를 옮기지 않고도 며칠 전 미처리 주문을 찾아 바로 처리 ===== */
+
+function pastDateStr(daysAgo){
+  const d = new Date(currentDate + 'T00:00:00');
+  d.setDate(d.getDate() - daysAgo);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+async function searchPendingAcrossDates(query, daysBack){
+  const q = normName(query);
+  if(!q) return [];
+  const results = [];
+  for(let i=1; i<=daysBack; i++){
+    const date = pastDateStr(i);
+    let list = [];
+    try{
+      const res = await window.storage.get(ordersKey(date), true);
+      list = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ continue; }
+    list.forEach(o=>{
+      const dn = displayName(o.name);
+      if(!(normName(o.name).includes(q) || normName(dn).includes(q))) return;
+      Object.entries(o.items||{}).forEach(([p,it])=>{
+        if(normalizeItem(it).status === 'none'){
+          results.push({ date, orderId:o.id, rawName:o.name, name:dn, product:p, qty:it.qty });
+        }
+      });
+    });
+  }
+  return results;
+}
+
+function renderPastPendingResults(results){
+  const el = $('#pastPendingResults');
+  if(results.length === 0){
+    el.innerHTML = '<div class="empty" style="padding:20px 0;">최근 14일 안에 미처리 주문이 없어요</div>';
+    return;
+  }
+  el.innerHTML = results
+    .sort((a,b)=> b.date.localeCompare(a.date))
+    .map((r,i)=>`
+      <div class="result-row">
+        <div>
+          <div class="rname">${r.name}</div>
+          <div class="ritems">${r.date} · ${r.product} ${r.qty}개</div>
+        </div>
+        <button class="mini-btn primary" data-act="resolvepast" data-idx="${i}">수령 처리</button>
+      </div>`).join('');
+}
+
+let pastPendingResults = [];
+
+$('#pastPendingBtn').addEventListener('click', ()=>{
+  $('#pastPendingInput').value = '';
+  $('#pastPendingResults').innerHTML = '';
+  $('#pastPendingModal').style.display = 'flex';
+  setTimeout(()=>$('#pastPendingInput').focus(), 100);
+});
+$('#pastPendingCloseBtn').addEventListener('click', ()=>{
+  $('#pastPendingModal').style.display = 'none';
+});
+$('#pastPendingSearchBtn').addEventListener('click', async ()=>{
+  const q = $('#pastPendingInput').value.trim();
+  if(!q){ toast('이름을 입력해주세요'); return; }
+  $('#pastPendingResults').innerHTML = '<div class="empty" style="padding:20px 0;">조회 중...</div>';
+  pastPendingResults = await searchPendingAcrossDates(q, 14);
+  renderPastPendingResults(pastPendingResults);
+});
+$('#pastPendingInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') $('#pastPendingSearchBtn').click();
+});
+
+$('#pastPendingResults').addEventListener('click', async (e)=>{
+  const btn = e.target.closest('[data-act="resolvepast"]');
+  if(!btn) return;
+  const r = pastPendingResults[Number(btn.dataset.idx)];
+  if(!r) return;
+  btn.disabled = true;
+  const ok = await resolvePendingItem(r.date, r.orderId, r.product);
+  if(ok){
+    toast(`${r.name} · ${r.product} 수령 처리됐어요`);
+    pastPendingResults = pastPendingResults.filter(x=>x!==r);
+    renderPastPendingResults(pastPendingResults);
+  }else{
+    toast('처리에 실패했어요, 다시 시도해주세요');
+    btn.disabled = false;
+  }
+});
+
+// 다른 날짜의 항목을 지금 화면을 옮기지 않고 수령 처리
+async function resolvePendingItem(date, orderId, product){
+  try{
+    const res = await window.storage.get(ordersKey(date), true);
+    let list = res && res.value ? JSON.parse(res.value) : [];
+    const o = list.find(x=>x.id===orderId);
+    if(!o || !o.items[product]) return false;
+    const it = normalizeItem(o.items[product]);
+    const linkKey = it.postponeKey;
+    const linkedDate = it.fromPostpone || it.postponedTo;
+
+    it.status = 'picked';
+    it.at = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    it.updatedAt = Date.now();
+    it.picked = true;
+    it.cancelled = false;
+
+    await window.storage.set(ordersKey(date), JSON.stringify(list), true);
+    if(currentDate === date) await loadOrders();
+
+    if(linkKey && linkedDate){
+      await syncLinkedPostponeStatus(linkedDate, linkKey, 'picked', it.at);
+    }
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+async function addComment(id, text){
+  const o = orders.find(x=>x.id===id);
+  if(!o || !text.trim()) return;
+  if(!o.comments) o.comments = [];
+  o.comments.push({ text: text.trim(), at: new Date().toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) });
+  render();
+  lastLocalChange = Date.now();
+  await saveOrders();
+}
+
+async function deleteComment(id, idx){
+  const o = orders.find(x=>x.id===id);
+  if(!o || !o.comments) return;
+  o.comments.splice(idx, 1);
+  render();
+  lastLocalChange = Date.now();
+  await saveOrders();
+}
+
+async function deleteOrder(id){
+  const target = orders.find(x=>x.id===id);
+  const deletedName = target ? target.name : null;
+  orders = orders.filter(x=>x.id!==id);
+  render();
+  lastLocalChange = Date.now();
+  await saveOrders(deletedName);
+}
+
+
+$('#resetBtn').addEventListener('click', ()=>{
+  if(orders.length === 0){
+    toast('이미 목록이 비어있어요');
+    return;
+  }
+  $('#resetModalText').textContent = `${currentDate} 주문 목록 ${orders.length}건을 모두 삭제할까요? 노쇼 기록은 유지돼요.`;
+  $('#resetModal').style.display = 'flex';
+});
+
+$('#resetCancelBtn').addEventListener('click', ()=>{
+  $('#resetModal').style.display = 'none';
+});
+
+$('#resetOkBtn').addEventListener('click', async ()=>{
+  $('#resetModal').style.display = 'none';
+  orders = [];
+  render();
+  lastLocalChange = Date.now();
+  await saveOrders();
+  toast('오늘 주문 목록이 초기화됐어요');
+});
+
+$('#closeDayBtn').addEventListener('click', ()=>{
+  const g = groupByStatus();
+  const total = g.noshow.length + g.pending.length + g.postponed.length;
+  if(total === 0){
+    doClose();
+    return;
+  }
+  const parts = [];
+  if(g.noshow.length)    parts.push(`노쇼 ${g.noshow.length}명`);
+  if(g.pending.length)   parts.push(`미처리 ${g.pending.length}명`);
+  if(g.postponed.length) parts.push(`연기 ${g.postponed.length}명`);
+  $('#confirmModalText').textContent = `${parts.join(' · ')} 상태로 마감할까요?\n노쇼로 표시된 분만 노쇼 기록에 쌓여요.`;
+  $('#confirmModal').style.display = 'flex';
+});
+
+$('#confirmCancelBtn').addEventListener('click', ()=>{
+  $('#confirmModal').style.display = 'none';
+});
+
+$('#confirmOkBtn').addEventListener('click', async ()=>{
+  $('#confirmModal').style.display = 'none';
+  await doClose();
+});
+
+// 상태별로 주문 분류
+function groupByStatus(){
+  const noshow=[], pending=[], postponed=[], cancelled=[], done=[];
+  orders.forEach(o=>{
+    const ns = itemsByStatus(o,'noshow');
+    const nn = itemsByStatus(o,'none');
+    const pp = itemsByStatus(o,'postponed');
+    const cc = itemsByStatus(o,'cancelled');
+    if(Object.keys(ns).length) noshow.push({name:o.name, items:ns});
+    if(Object.keys(nn).length) pending.push({name:o.name, items:nn});
+    if(Object.keys(pp).length){
+      const toDates = [...new Set(Object.keys(pp).map(p=>o.items[p].postponedTo).filter(Boolean))];
+      postponed.push({name:o.name, items:pp, to: toDates.join(', ')});
+    }
+    if(Object.keys(cc).length) cancelled.push({name:o.name, items:cc});
+    if(allItemsPicked(o)) done.push(o);
+  });
+  return { noshow, pending, postponed, cancelled, done };
+}
+
+async function doClose(){
+  const g = groupByStatus();
+  // 노쇼로 표시된 것만 노쇼 기록에 적립 (기존 방식 유지)
+  g.noshow.forEach(e=>{
+    noshowLog = noshowLog.filter(n => !(n.name===e.name && n.date===currentDate));
+    noshowLog.push({ name:displayName(e.name), date:currentDate, items:e.items });
+  });
+  await saveNoshow();
+  await accrueHistory();
+  renderNoshow();
+  renderMembers();
+  showCloseResults(g);
+}
+
+// 마감 시점에 그날 결과를 고객별 이력으로 적립 (같은 날 재마감 시 덮어씀)
+async function accrueHistory(){
+  orders.forEach(o=>{
+    const key = historyKeyFor(o.name);
+    const rec = {
+      date: currentDate,
+      name: displayName(o.name),
+      picked:    itemsByStatus(o,'picked'),
+      noshow:    itemsByStatus(o,'noshow'),
+      postponed: itemsByStatus(o,'postponed'),
+      cancelled: itemsByStatus(o,'cancelled'),
+      pending:   itemsByStatus(o,'none')
+    };
+    history[key] = (history[key]||[]).filter(r => r.date !== currentDate);
+    history[key].push(rec);
+  });
+  await saveHistory();
+}
+
+function closeSection(title, list, cls, unit){
+  if(!list.length) return '';
+  const totals = {};
+  list.forEach(e=>Object.entries(e.items).forEach(([p,q])=>{ totals[p]=(totals[p]||0)+q; }));
+  const sum = Object.entries(totals).map(([p,q])=>`${p} ${q}개`).join(' · ');
+  const rows = list
+    .sort((a,b)=>displayName(a.name).localeCompare(displayName(b.name),'ko'))
+    .map(e=>{
+      const t = Object.values(e.items).reduce((s,q)=>s+q,0);
+      const info = displayNameInfo(e.name);
+      const toTxt = e.to ? `<div class="ritems" style="color:#5B3E8C;">→ ${e.to}로 연기</div>` : '';
+      return `<div class="result-row">
+          <div>
+            <div class="rname">${info.name}${info.phone4?`<span class="phone-inline">${info.phone4}</span>`:''}</div>
+            <div class="ritems">${itemsToText(e.items)}</div>
+            ${toTxt}
+          </div>
+          <div class="rtotal ${cls}">${t}개</div>
+        </div>`;
+    }).join('');
+  return `<div class="close-sec">
+      <div class="close-sec-head ${cls}">${title} ${list.length}명</div>
+      <div class="result-summary" style="margin:0 0 8px;">${sum}</div>
+      ${rows}
+    </div>`;
+}
+
+function showCloseResults(g){
+  const n = g.noshow.length, pd = g.pending.length, po = g.postponed.length;
+  $('#closeModalDate').textContent =
+    `${currentDate} · 노쇼 ${n}명 · 미처리 ${pd}명 · 연기 ${po}명`;
+
+  const listEl = $('#closeResultsList');
+  if(n===0 && pd===0 && po===0){
+    listEl.innerHTML = '<div class="modal-empty">🎉 오늘은 전원 수령 완료했어요</div>';
+  } else {
+    listEl.innerHTML =
+      closeSection('🚫 노쇼', g.noshow, 'c-noshow') +
+      closeSection('❓ 미처리 (버튼 안 누름)', g.pending, 'c-pending') +
+      closeSection('🕒 연기', g.postponed, 'c-post') +
+      closeSection('↩️ 취소', g.cancelled, 'c-cancel');
+  }
+  $('#closeModal').style.display = 'flex';
+}
+
+$('#closeModalOkBtn').addEventListener('click', ()=>{
+  $('#closeModal').style.display = 'none';
+});
+
+function itemsToText(items){
+  return Object.entries(items).map(([p,q])=>`${p} ${q}`).join(' · ');
+}
+
+function attr(str){
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+}
+
+let activeProductFilter = null;
+let searchClearOnFocus = false;   // 수령 등 상태 처리 후, 검색창을 다시 누르면 검색어를 자동으로 지움
+let statFilter = 'all';   // 'all' | 'done' | 'left'
+
+function render(){
+  // 입력 중인 코멘트칸 상태 보존 (재렌더로 지워지는 것 방지)
+  const activeEl = document.activeElement;
+  let preserveCommentFor = null, preserveValue = null, preserveCaret = null;
+  if(activeEl && activeEl.matches && activeEl.matches('input[data-comment-for]')){
+    preserveCommentFor = activeEl.getAttribute('data-comment-for');
+    preserveValue = activeEl.value;
+    preserveCaret = activeEl.selectionStart;
+  }
+
+  const q = $('#searchInput').value.trim();
+  const list = $('#orderList');
+
+  // 검색: 초성/부분음절/번호 + 관리명단 이름·이전이름까지 모두 대상
+  let filtered = orders.filter(o => orderMatches(o, q));
+
+  // 통계 클릭 필터 (수령완료 / 미수령)
+  if(statFilter === 'done'){
+    filtered = filtered.filter(o => !isFullyCancelled(o) && allItemsPicked(o));
+  } else if(statFilter === 'left'){
+    filtered = filtered.filter(o => !isFullyCancelled(o) && !allItemsPicked(o));
+  }
+  // 상품 필터 적용: 해당 상품을 (취소 안 하고) 주문한 사람만
+  if(activeProductFilter){
+    filtered = filtered.filter(o => o.items[activeProductFilter] && st(o.items[activeProductFilter]) !== 'cancelled');
+  }
+
+  renderSummaryTable(filtered);
+  renderFilterBanner();
+  renderStatSummary(filtered);
+
+  if(filtered.length === 0){
+    const emptyMsg = orders.length===0 ? '아직 등록된 주문이 없어요'
+      : (statFilter==='done' ? '아직 수령 완료된 주문이 없어요'
+      : (statFilter==='left' ? '미수령 주문이 없어요 🎉'
+      : (activeProductFilter ? '이 상품을 예약한 사람이 없어요' : '검색 결과가 없어요')));
+    list.innerHTML = `<div class="empty">${emptyMsg}</div>`;
+  } else {
+    list.innerHTML = filtered
+      .sort((a,b)=> Number(allItemsPicked(a)) - Number(allItemsPicked(b)) || displayName(a.name).localeCompare(displayName(b.name),'ko'))
+      .map(o=>{
+        const info = displayNameInfo(o.name);
+        const mem = info.member;
+        const noshowCount = mem ? memberNoshowCount(mem) : noshowLog.filter(n=>n.name===o.name).length;
+        // 상품 필터 시 해당 상품 라인만, 아니면 전체 아이템
+        let entries = Object.entries(o.items);
+        if(activeProductFilter) entries = entries.filter(([p])=>p===activeProductFilter);
+        const activeEntries = entries.filter(([,it])=>st(it)!=='cancelled');
+        const pickedCount = activeEntries.filter(([,it])=>st(it)==='picked').length;
+        const done = activeEntries.length>0 && activeEntries.every(([,it])=>st(it)==='picked');
+        const comments = o.comments || [];
+        const phoneTxt = (mem && mem.phone4) ? `<span class="phone-inline">${mem.phone4}</span>`
+                        : (info.phone4 ? `<span class="phone-inline">${info.phone4}</span>` : '');
+        const guestBadge = (!mem && members.length) ? '<span class="guest-badge">미등록</span>' : '';
+        const nsBadge = noshowCount>=3
+          ? `<span class="warn-badge">⚠️ 노쇼 ${noshowCount}회</span>`
+          : (noshowCount>0 ? `<span class="noshow-badge">노쇼 ${noshowCount}회</span>` : '');
+        return `
+        <div class="order ${done?'picked':''}">
+          <div class="toprow">
+            <div style="flex:1;min-width:0;">
+              <div class="name">${info.name}${phoneTxt}${guestBadge}${nsBadge}</div>
+              ${info.orig ? `<div class="member-sub">카톡: ${info.orig}</div>` : ''}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="progress-badge">${pickedCount}/${activeEntries.length} 수령</span>
+              <button class="del" data-id="${o.id}">✕</button>
+            </div>
+          </div>
+          ${o.note ? `<div class="note">📝 ${o.note}</div>` : ''}
+          ${entries.map(([p,it])=>{
+            const s = st(it);
+            const btn = (status, label, cls) =>
+              `<button class="st-btn ${cls} ${s===status?'on':''}" data-act="status" data-status="${status}" data-id="${o.id}" data-product="${attr(p)}">${label}</button>`;
+            const stateTxt = s==='none' ? '' :
+              `<span class="state-tag tag-${s}">${STATUS_LABEL[s]}${s==='postponed'&&it.postponedTo?` → ${it.postponedTo}`:''}${it.at&&s!=='postponed'?` ${it.at}`:''}</span>`;
+            const fromTxt = it.fromPostpone
+              ? `<span class="state-tag tag-postponed">${it.fromPostpone}에서 연기됨</span>` : '';
+            return `
+            <div class="item-line ${s==='cancelled'?'cancelled':''}">
+              <span class="item-name">${p}<b>${it.qty}</b>${stateTxt}${fromTxt}</span>
+              <div class="item-btns">
+                ${btn('picked','수령','b-pick')}
+                ${btn('noshow','노쇼','b-noshow')}
+                ${btn('postponed','연기','b-post')}
+                ${btn('cancelled','취소','b-cancel')}
+              </div>
+            </div>`;
+          }).join('')}
+          <div class="comment-box">
+            ${comments.length ? `<div class="comment-list">${comments.map((c,i)=>`
+              <div class="comment-item">
+                <span>💬 ${c.text} <span class="ctime">${c.at}</span></span>
+                <button class="cdel" data-act="delcomment" data-id="${o.id}" data-idx="${i}">✕</button>
+              </div>`).join('')}</div>` : ''}
+            <div class="comment-input-row">
+              <input type="text" placeholder="직원 메모 (결제완료, 내일 픽업 등)" data-comment-for="${o.id}" />
+              <button data-act="addcomment" data-id="${o.id}">등록</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+  }
+
+  // 통계: 취소된 주문은 총 주문에서 제외
+  const activeOrders = orders.filter(o=>!isFullyCancelled(o));
+  const total = activeOrders.length;
+  const done = activeOrders.filter(o=>allItemsPicked(o)).length;
+  $('#statTotal').textContent = total;
+  $('#statDone').textContent = done;
+  $('#statLeft').textContent = total - done;
+
+  // 상품 필터 바: 당일 상품별 예약 인원(취소 제외) 표시, 클릭 시 필터
+  const prodStats = {};
+  orders.forEach(o=>{
+    Object.entries(o.items).forEach(([p,it])=>{
+      if(st(it) === 'cancelled') return;
+      if(!prodStats[p]) prodStats[p] = { people:0, qty:0, fromPostponeQty:0 };
+      prodStats[p].people += 1;
+      prodStats[p].qty += it.qty;
+      if(it.fromPostpone) prodStats[p].fromPostponeQty += it.qty;
+    });
+  });
+  const prodKeys = Object.keys(prodStats);
+  $('#prodBarLabel').style.display = prodKeys.length ? 'block' : 'none';
+  $('#prodBar').innerHTML = prodKeys.length
+    ? prodKeys.map(p=>{
+        const fp = prodStats[p].fromPostponeQty;
+        const fpBadge = fp>0 ? `<span class="cnt-fp" title="다른 날짜에서 연기되어 들어온 수량">↩${fp}</span>` : '';
+        return `<span class="prodchip ${activeProductFilter===p?'active':''}" data-act="filter" data-product="${attr(p)}">${p}<span class="cnt">${prodStats[p].qty}개</span>${fpBadge}<button class="prod-print-btn" data-act="printprod" data-product="${attr(p)}" title="이 상품 명단 인쇄">🖨</button></span>`;
+      }).join('')
+    : '';
+
+  $('#footerActions').style.display = total > 0 ? 'block' : 'none';
+
+  // 통계 박스 활성 표시
+  document.querySelectorAll('.stat').forEach(el=>{
+    el.classList.toggle('on', el.dataset.statfilter === statFilter && statFilter !== 'all');
+  });
+
+  // 입력 중이던 코멘트칸 값/포커스/커서 위치 복원
+  if(preserveCommentFor !== null){
+    const restored = document.querySelector(`input[data-comment-for="${preserveCommentFor}"]`);
+    if(restored){
+      restored.value = preserveValue;
+      restored.focus();
+      try{ restored.setSelectionRange(preserveCaret, preserveCaret); }catch(e){}
+    }
+  }
+}
+
+// 통계 탭(총주문/수령완료/미수령) 선택 시 상품별 합계 표시
+function renderStatSummary(filtered){
+  const box = $('#statSummary');
+  if(!box) return;
+
+  if(statFilter === 'all' && !activeProductFilter){
+    box.style.display = 'none';
+    return;
+  }
+
+  const label = { all:'전체 주문', done:'수령완료', left:'미수령' }[statFilter] || '전체 주문';
+  const totals = {};
+  let people = 0;
+
+  filtered.forEach(o=>{
+    let counted = false;
+    Object.entries(o.items).forEach(([p,it])=>{
+      const s = st(it);
+      if(s === 'cancelled') return;
+      // 수령완료 탭이면 수령분만, 미수령 탭이면 미수령분만
+      if(statFilter === 'done' && s !== 'picked') return;
+      if(statFilter === 'left' && s === 'picked') return;
+      if(activeProductFilter && p !== activeProductFilter) return;
+      totals[p] = (totals[p]||0) + it.qty;
+      counted = true;
+    });
+    if(counted) people++;
+  });
+
+  const entries = Object.entries(totals);
+  if(entries.length === 0){
+    box.style.display = 'none';
+    return;
+  }
+  const grand = entries.reduce((s,[,q])=>s+q,0);
+  box.style.display = 'block';
+  box.innerHTML = `
+    <div class="stat-sum-head">📦 ${label} 상품별 합계 · ${people}명 · 총 ${grand}개</div>
+    <div class="stat-sum-grid">
+      ${entries.sort((a,b)=>b[1]-a[1]).map(([p,q])=>
+        `<div class="stat-sum-item"><span>${p}</span><b>${q}개</b></div>`).join('')}
+    </div>`;
+}
+
+function renderFilterBanner(){
+  let banner = $('#filterBanner');
+  if(activeProductFilter){
+    if(!banner){
+      banner = document.createElement('div');
+      banner.id = 'filterBanner';
+      banner.className = 'filter-banner';
+      $('#orderList').parentNode.insertBefore(banner, $('#orderList'));
+    }
+    const agg = {};
+    orders.forEach(o=>{
+      const it = o.items[activeProductFilter];
+      if(it && st(it) !== 'cancelled'){ agg.people=(agg.people||0)+1; agg.qty=(agg.qty||0)+it.qty; }
+    });
+    banner.innerHTML = `<span>🔎 "${activeProductFilter}" 예약자 ${agg.people||0}명 · 총 ${agg.qty||0}개</span><button data-act="clearfilter">전체 보기 ✕</button>`;
+  } else if(banner){
+    banner.remove();
+  }
+}
+
+function renderSummaryTable(filtered){
+  const table = $('#summaryTable');
+  if(filtered.length === 0){
+    table.innerHTML = '';
+    return;
+  }
+  const products = [];
+  filtered.forEach(o=>Object.keys(o.items).forEach(p=>{ if(!products.includes(p)) products.push(p); }));
+
+  const head = `<tr><th>고객명</th>${products.map(p=>`<th>${p}</th>`).join('')}</tr>`;
+  const rows = filtered
+    .slice()
+    .sort((a,b)=>displayName(a.name).localeCompare(displayName(b.name),'ko'))
+    .map(o=>{
+      const cells = products.map(p=>{
+        const it = o.items[p];
+        if(!it) return '<td class="qty-empty">-</td>';
+        const s2 = st(it);
+        if(s2==='cancelled') return `<td style="color:var(--ink-soft);text-decoration:line-through;">${it.qty}</td>`;
+        if(s2==='picked')    return `<td class="qty-done">${it.qty} ✓</td>`;
+        if(s2==='noshow')    return `<td style="color:var(--alert);font-weight:700;">${it.qty} ✕</td>`;
+        if(s2==='postponed') return `<td style="color:#5B3E8C;font-weight:700;">${it.qty} 연기</td>`;
+        return `<td class="qty-left">${it.qty}</td>`;
+      }).join('');
+      return `<tr><td>${displayName(o.name)}</td>${cells}</tr>`;
+    }).join('');
+
+  table.innerHTML = head + rows;
+}
+
+function renderCancel(){
+  const el = $('#cancelList');
+  const cancelled = [];
+  orders.forEach(o=>{
+    Object.entries(o.items).forEach(([p,it])=>{
+      if(st(it) === 'cancelled') cancelled.push({ name:o.name, product:p, qty:it.qty, at:it.at||it.cancelledAt });
+    });
+  });
+  if(cancelled.length === 0){
+    el.innerHTML = '<div class="empty">취소된 주문이 없습니다</div>';
+    return;
+  }
+  const totalQty = cancelled.reduce((s,c)=>s+c.qty,0);
+  el.innerHTML =
+    `<div class="result-summary" style="margin:0 0 12px;">총 취소 ${cancelled.length}건 · ${totalQty}개</div>` +
+    cancelled
+      .sort((a,b)=>displayName(a.name).localeCompare(displayName(b.name),'ko'))
+      .map(c=>`<div class="noshow-item"><span>${displayName(c.name)} · <b style="background:none;color:var(--ink);padding:0;">${c.product} ${c.qty}개</b> ${c.at?`<span style="color:var(--ink-soft);font-size:11px;">(${c.at})</span>`:''}</span><b>취소</b></div>`)
+      .join('');
+}
+
+let memberView = 'kakao'; // 'kakao' | 'managed'
+let dormantOnly = false;
+
+// 회원 한 줄 렌더 (mode: 'kakao' | 'managed' | 'pending')
+function memberRowHTML(m, mode){
+  const ns = memberNoshowCount(m);
+  const aliasTxt = (m.aliases||[]).length ? `이전 이름: ${m.aliases.join(', ')}` : '';
+  const nsBadge = ns>=3
+    ? `<span class="warn-badge">⚠️ 노쇼 ${ns}회</span>`
+    : (ns>0 ? `<span class="noshow-badge">노쇼 ${ns}회</span>` : '');
+
+  let phonePart = '';
+  if(m.phone4){
+    const srcTag = m.phoneSource === 'manual'
+      ? '<span class="src-tag src-manual">수기</span>'
+      : '<span class="src-tag src-kakao">카톡</span>';
+    phonePart = `<span class="phone-tag">${m.phone4}</span>${mode==='managed'?srcTag:''}`;
+  } else {
+    phonePart = '<span class="guest-badge">번호없음</span>';
+  }
+
+  let actions = '';
+  if(mode === 'managed'){
+    actions = `<button class="mini-btn primary" data-act="editname" data-id="${m.id}">이름</button>
+               <button class="mini-btn" data-act="setphone" data-id="${m.id}">번호</button>
+               <button class="mini-btn" data-act="delmember" data-id="${m.id}">삭제</button>`;
+  } else if(mode === 'pending'){
+    actions = `<button class="mini-btn primary" data-act="setphone" data-id="${m.id}">번호 입력</button>`;
+  } else {
+    actions = `${m.phone4 ? '' : `<button class="mini-btn primary" data-act="setphone" data-id="${m.id}">번호 입력</button>`}
+               <button class="mini-btn" data-act="delmember" data-id="${m.id}">삭제</button>`;
+  }
+
+  const updatedTxt = (mode==='managed' && m.updatedAt) ? `최근 수정 ${m.updatedAt}` : '';
+
+  // 1개월(30일) 이상 미구매 표시
+  const last = lastPurchaseDate(m);
+  let dormantBadge = '';
+  let lastTxt = '';
+  if(last){
+    const d = daysSince(last);
+    lastTxt = `최근 구매 ${last} (${d===0?'오늘':d+'일 전'})`;
+    if(d >= 30) dormantBadge = `<span class="dormant-badge">😴 ${d}일 미구매</span>`;
+  } else if(Object.keys(history).length > 0){
+    lastTxt = '구매 이력 없음';
+  }
+
+  const subLines = [aliasTxt, lastTxt, updatedTxt].filter(Boolean).join(' · ');
+
+  return `
+    <div class="member-row clickable" data-act="detail" data-id="${m.id}">
+      <div class="member-info">
+        <div class="member-name">${m.name}${phonePart}${nsBadge}${dormantBadge}</div>
+        ${subLines ? `<div class="member-sub">${subLines}</div>` : ''}
+      </div>
+      <div class="member-actions">${actions}</div>
+    </div>`;
+}
+
+function matchQuery(m, q){
+  if(!q) return true;
+  return normName(m.name).includes(q)
+      || (m.phone4||'').includes(q)
+      || (m.aliases||[]).some(a=>normName(a).includes(q));
+}
+
+function renderMembers(){
+  const withPhone = members.filter(m=>m.phone4);
+  const noPhone = members.filter(m=>!m.phone4);
+
+  // 서브탭 카운트
+  $('#cntKakao').textContent = members.length ? `${members.length}` : '';
+  $('#cntManaged').textContent = withPhone.length ? `${withPhone.length}` : '';
+  $('#memberCount').textContent = members.length ? `(${members.length}명)` : '';
+  $('#managedCount').textContent = withPhone.length ? `(${withPhone.length}명)` : '';
+  $('#pendingCount').textContent = noPhone.length ? `(${noPhone.length}명)` : '';
+
+  // ---- 카톡명단 ----
+  const q1 = normName(($('#memberSearch') && $('#memberSearch').value) || '');
+  const list1 = members.filter(m=>matchQuery(m,q1));
+  $('#memberList').innerHTML = list1.length === 0
+    ? `<div class="empty">${members.length===0 ? '등록된 회원이 없습니다' : '검색 결과가 없어요'}</div>`
+    : list1.slice().sort((a,b)=>a.name.localeCompare(b.name,'ko')).map(m=>memberRowHTML(m,'kakao')).join('');
+
+  // ---- 관리명단 ----
+  const q2 = normName(($('#managedSearch') && $('#managedSearch').value) || '');
+  let list2 = withPhone.filter(m=>matchQuery(m,q2));
+  if(dormantOnly) list2 = list2.filter(m=>isDormant(m));
+
+  const dormantCount = withPhone.filter(m=>isDormant(m)).length;
+  const dt = $('#dormantToggle');
+  if(dt){
+    dt.textContent = dormantOnly
+      ? `✕ 전체 보기 (미구매 ${dormantCount}명)`
+      : `😴 1개월+ 미구매만 보기 (${dormantCount}명)`;
+    dt.classList.toggle('primary', dormantOnly);
+  }
+
+  $('#managedList').innerHTML = list2.length === 0
+    ? `<div class="empty">${dormantOnly ? '1개월 이상 미구매 회원이 없어요 👍' : (withPhone.length===0 ? '아직 번호가 등록된 회원이 없습니다' : '검색 결과가 없어요')}</div>`
+    : list2.slice().sort((a,b)=>a.name.localeCompare(b.name,'ko')).map(m=>memberRowHTML(m,'managed')).join('');
+
+  // ---- 번호 미등록 (관리명단 하단) ----
+  if(noPhone.length === 0){
+    $('#pendingCard').style.display = 'none';
+  } else {
+    $('#pendingCard').style.display = 'block';
+    $('#pendingList').innerHTML = noPhone
+      .slice().sort((a,b)=>a.name.localeCompare(b.name,'ko'))
+      .map(m=>memberRowHTML(m,'pending')).join('');
+  }
+
+  renderUnmatched();
+}
+
+function switchMemberView(v){
+  memberView = v;
+  document.querySelectorAll('.subtab').forEach(t=>t.classList.toggle('active', t.dataset.sub===v));
+  $('#viewKakao').style.display = v==='kakao' ? '' : 'none';
+  $('#viewManaged').style.display = v==='managed' ? '' : 'none';
+}
+document.querySelectorAll('.subtab').forEach(t=>{
+  t.addEventListener('click', ()=>switchMemberView(t.dataset.sub));
+});
+
+// 오늘 주문자 중 회원 명단에 없는 사람
+function renderUnmatched(){
+  const card = $('#unmatchedCard');
+  const el = $('#unmatchedList');
+  const unmatched = orders.filter(o => !findMember(o.name));
+
+  if(unmatched.length === 0 || members.length === 0){
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+  el.innerHTML = unmatched
+    .slice()
+    .sort((a,b)=>a.name.localeCompare(b.name,'ko'))
+    .map(o=>`
+      <div class="unmatched-row">
+        <span style="font-size:13.5px;font-weight:700;">${o.name}</span>
+        <button class="mini-btn primary" data-act="addmember" data-name="${attr(o.name)}">회원 추가</button>
+      </div>`).join('');
+}
+
+$('#rosterAddBtn').addEventListener('click', async ()=>{
+  const raw = $('#rosterInput').value.trim();
+  if(!raw){ toast('붙여넣을 명단이 없어요'); return; }
+  const lines = raw.split('\n');
+  let added=0, updated=0;
+  lines.forEach(line=>{
+    const p = parseNameLine(line);
+    if(!p) return;
+    const r = upsertMember(p.name, p.phone4);
+    if(r==='added') added++;
+    else if(r==='updated') updated++;
+  });
+  if(added===0 && updated===0){ toast('새로 추가된 회원이 없어요'); return; }
+  await saveMembers();
+  $('#rosterInput').value = '';
+  renderMembers();
+  render();
+  toast(`${added}명 추가${updated?`, ${updated}명 갱신`:''}`);
+});
+
+$('#memberSearch').addEventListener('input', renderMembers);
+$('#managedSearch').addEventListener('input', renderMembers);
+$('#dormantToggle').addEventListener('click', ()=>{
+  dormantOnly = !dormantOnly;
+  renderMembers();
+});
+
+$('#tab-members').addEventListener('click', async (e)=>{
+  const btn = e.target.closest('[data-act]');
+  if(!btn) return;
+  const act = btn.dataset.act;
+
+  if(act === 'addmember'){
+    const p = parseNameLine(btn.dataset.name);
+    if(p){
+      upsertMember(p.name, p.phone4);
+      await saveMembers();
+      renderMembers();
+      render();
+      toast(`${p.name} 회원 추가됨`);
+    }
+    return;
+  }
+  if(act === 'setphone'){
+    const m = members.find(x=>x.id===btn.dataset.id);
+    if(m) openPhoneModal(m);
+    return;
+  }
+  if(act === 'editname'){
+    const m = members.find(x=>x.id===btn.dataset.id);
+    if(m) openNameModal(m);
+    return;
+  }
+  if(act === 'detail'){
+    const m = members.find(x=>x.id===btn.dataset.id);
+    if(m) openMemberDetail(m);
+    return;
+  }
+  if(act === 'delmember'){
+    const m = members.find(x=>x.id===btn.dataset.id);
+    if(m) openDeleteMemberModal(m);
+    return;
+  }
+});
+
+/* 고객 상세 이력 모달 */
+function itemsLine(obj){
+  const e = Object.entries(obj||{});
+  return e.length ? e.map(([p,q])=>`${p} ${q}`).join(', ') : '';
+}
+
+function openMemberDetail(m){
+  const s = memberSummary(m);
+  $('#detailName').textContent = m.name + (m.phone4 ? ` (${m.phone4})` : '');
+
+  const subParts = [];
+  if(s.last){
+    const d = daysSince(s.last);
+    subParts.push(`최근 구매 ${s.last} (${d===0?'오늘':d+'일 전'})`);
+  } else {
+    subParts.push('구매 이력 없음');
+  }
+  if((m.aliases||[]).length) subParts.push(`이전 이름: ${m.aliases.join(', ')}`);
+  $('#detailSub').textContent = subParts.join(' · ');
+
+  $('#dStatBuys').textContent = s.buys;
+  $('#dStatItems').textContent = s.items;
+  $('#dStatNoshow').textContent = s.noshows;
+  $('#dStatCancel').textContent = s.cancels;
+
+  const recs = getHistory(historyKeyOfMember(m));
+  const el = $('#detailHistory');
+  if(recs.length === 0){
+    el.innerHTML = '<div class="empty" style="padding:22px 0;">아직 기록된 이력이 없어요.<br>마감을 하면 그날 결과가 쌓여요.</div>';
+  } else {
+    el.innerHTML = recs.map(r=>{
+      const rows = [];
+      if(Object.keys(r.picked||{}).length) rows.push(`<span class="hist-tag tag-picked">수령</span> ${itemsLine(r.picked)}`);
+      if(Object.keys(r.noshow||{}).length) rows.push(`<span class="hist-tag tag-noshow">노쇼</span> ${itemsLine(r.noshow)}`);
+      if(Object.keys(r.cancelled||{}).length) rows.push(`<span class="hist-tag tag-cancel">취소</span> ${itemsLine(r.cancelled)}`);
+      if(!rows.length) return '';
+      return `<div class="hist-row">
+          <div>${rows.join('<br>')}</div>
+          <div class="hist-date">${r.date}</div>
+        </div>`;
+    }).join('');
+  }
+  $('#detailModal').style.display = 'flex';
+}
+$('#detailCloseBtn').addEventListener('click', ()=>{
+  $('#detailModal').style.display = 'none';
+});
+
+/* 이름 수정 모달 */
+let nameTarget = null;
+function openNameModal(m){
+  nameTarget = m;
+  $('#nameModalSub').textContent = m.phone4 ? `번호 ${m.phone4} 회원` : m.name;
+  $('#nameInput').value = m.name;
+  $('#nameModal').style.display = 'flex';
+  setTimeout(()=>$('#nameInput').select(), 100);
+}
+$('#nameCancelBtn').addEventListener('click', ()=>{
+  nameTarget = null;
+  $('#nameModal').style.display = 'none';
+});
+$('#nameOkBtn').addEventListener('click', async ()=>{
+  const v = $('#nameInput').value.trim();
+  if(!v){ toast('이름을 입력해주세요'); return; }
+  if(!nameTarget) return;
+
+  if(normName(v) !== normName(nameTarget.name)){
+    // 기존 이름을 이전 이름으로 보관 (옛 닉네임 주문도 계속 인식)
+    nameTarget.aliases = nameTarget.aliases || [];
+    if(!nameTarget.aliases.some(a=>normName(a)===normName(nameTarget.name))){
+      nameTarget.aliases.push(nameTarget.name);
+    }
+    nameTarget.name = v;
+    nameTarget.updatedAt = todayStr();
+  }
+  nameTarget = null;
+  $('#nameModal').style.display = 'none';
+  await saveMembers();
+  renderMembers();
+  render();
+  toast('이름이 수정됐어요');
+});
+$('#nameInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') $('#nameOkBtn').click();
+});
+
+/* 번호 입력 모달 */
+let phoneTarget = null;
+function openPhoneModal(m){
+  phoneTarget = m;
+  $('#phoneModalName').textContent = `${m.name} 님의 전화번호 뒤 4자리`;
+  $('#phoneInput').value = m.phone4 || '';
+  $('#phoneModal').style.display = 'flex';
+  setTimeout(()=>$('#phoneInput').focus(), 100);
+}
+$('#phoneCancelBtn').addEventListener('click', ()=>{
+  phoneTarget = null;
+  $('#phoneModal').style.display = 'none';
+});
+$('#phoneOkBtn').addEventListener('click', async ()=>{
+  const v = $('#phoneInput').value.trim();
+  if(!/^\d{4}$/.test(v)){ toast('숫자 4자리를 입력해주세요'); return; }
+  if(!phoneTarget){ return; }
+  const dup = members.find(m => m.phone4 === v && normName(m.name) === normName(phoneTarget.name) && m.id !== phoneTarget.id);
+  if(dup){ toast('같은 닉네임+번호 회원이 이미 있어요'); return; }
+  phoneTarget.phone4 = v;
+  phoneTarget.phoneSource = 'manual';   // 수기 입력 → 관리명단
+  phoneTarget.updatedAt = todayStr();
+  phoneTarget = null;
+  $('#phoneModal').style.display = 'none';
+  await saveMembers();
+  renderMembers();
+  render();
+  toast('관리명단에 등록됐어요');
+});
+$('#phoneInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') $('#phoneOkBtn').click();
+});
+
+/* 회원 삭제 모달 */
+let delMemberTarget = null;
+function openDeleteMemberModal(m){
+  delMemberTarget = m;
+  $('#delMemberText').textContent = `${memberLabel(m)} 님을 회원 명단에서 삭제할까요?`;
+  $('#delMemberModal').style.display = 'flex';
+}
+$('#delMemberCancelBtn').addEventListener('click', ()=>{
+  delMemberTarget = null;
+  $('#delMemberModal').style.display = 'none';
+});
+$('#delMemberOkBtn').addEventListener('click', async ()=>{
+  $('#delMemberModal').style.display = 'none';
+  if(!delMemberTarget) return;
+  members = members.filter(m => m.id !== delMemberTarget.id);
+  delMemberTarget = null;
+  await saveMembers();
+  renderMembers();
+  render();
+  toast('삭제됐어요');
+});
+
+function renderNoshow(){
+  const el = $('#noshowList');
+  if(noshowLog.length === 0){
+    el.innerHTML = '<div class="empty">기록이 없습니다</div>';
+    return;
+  }
+  const counts = {};
+  noshowLog.forEach(n => counts[n.name] = (counts[n.name]||0)+1);
+  const names = Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
+  el.innerHTML = names.map(name=>{
+    const records = noshowLog.filter(n=>n.name===name).slice(-3).reverse();
+    const dates = records.map(r=>r.date).join(', ');
+    return `<div class="noshow-item"><span>${name} <span style="color:var(--ink-soft);font-size:11.5px;">(${dates})</span></span><b>${counts[name]}회</b></div>`;
+  }).join('');
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  $('#tab-list').style.display = name==='list' ? '' : 'none';
+  $('#tab-add').style.display = name==='add' ? '' : 'none';
+  $('#tab-cancel').style.display = name==='cancel' ? '' : 'none';
+  $('#tab-noshow').style.display = name==='noshow' ? '' : 'none';
+  $('#tab-members').style.display = name==='members' ? '' : 'none';
+  $('#tab-schedule').style.display = name==='schedule' ? '' : 'none';
+  if(name==='cancel') renderCancel();
+  if(name==='members') renderMembers();
+  if(name==='schedule') loadCampaigns().then(renderCampaigns);
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', ()=>switchTab(t.dataset.tab)));
+
+// 통계 박스 클릭 → 명단 필터
+document.querySelectorAll('.stat').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    const f = el.dataset.statfilter;
+    statFilter = (statFilter === f) ? 'all' : f;
+    if(statFilter !== 'all') switchTab('list');
+    render();
+  });
+});
+
+$('#searchInput').addEventListener('input', ()=>{ render(); renderSearchSuggest(); });
+$('#searchInput').addEventListener('focus', ()=>{
+  if(searchClearOnFocus){
+    searchClearOnFocus = false;
+    if($('#searchInput').value.trim()){
+      $('#searchInput').value = '';
+      render();
+      renderSearchSuggest();
+    }
+  }
+});
+$('#dateInput').addEventListener('change', (e)=>{
+  currentDate = e.target.value;
+  orders = [];          // 이전 날짜 데이터 즉시 제거 (새 날짜로 새는 것 방지)
+  activeProductFilter = null;
+  statFilter = 'all';
+  render();
+  loadOrders();
+  renderWeekStrip();   // 선택 표시만 갱신 (수량은 그대로, 날짜 범위 밖이면 별도 처리 안 함)
+});
+
+/* ===== 주간 미니 캘린더: 연기유입 예정 물량을 날짜별로 미리 보여줌 ===== */
+let weekStripData = { dates: [], results: {} };
+
+function weekStripDates(){
+  const anchor = todayStr();
+  const dates = [];
+  for(let i=-1;i<=5;i++){
+    const d = new Date(anchor+'T00:00:00'); d.setDate(d.getDate()+i);
+    dates.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+  }
+  return dates;
+}
+
+async function loadWeekPostponeSummary(){
+  const dates = weekStripDates();
+  // 날짜별로 순서대로 기다리지 않고 한꺼번에 요청 — 7일치를 순차로 불러오면
+  // 다 불러올 때까지 화면에 아무것도 안 보여서 "늦게 뜨는" 것처럼 느껴졌음
+  const perDate = await Promise.all(dates.map(async (date) => {
+    let list = [];
+    try{
+      const res = await window.storage.get(ordersKey(date), true);
+      list = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ list = []; }
+    let qty = 0;
+    const products = {};   // 상품별 연기유입 수량 (배지에 축약해서 보여주기 위함)
+    list.forEach(o=>{
+      Object.entries(o.items||{}).forEach(([p,it])=>{
+        const nit = normalizeItem(it);
+        if(nit.fromPostpone && nit.status !== 'cancelled'){
+          qty += nit.qty;
+          products[p] = (products[p]||0) + nit.qty;
+        }
+      });
+    });
+    return [date, { qty, products }];
+  }));
+
+  const results = Object.fromEntries(perDate);
+  weekStripData = { dates, results };
+  renderWeekStrip();
+}
+
+// 상품명을 배지에 넣기 좋게 축약 (앞 2글자, "OO세트/박스/컵" 같은 접미사는 생략)
+function abbrevProduct(name){
+  const trimmed = name.replace(/\s*(세트|박스|컵|팩)$/,'').trim();
+  return (trimmed || name).slice(0,2);
+}
+
+function renderWeekStrip(){
+  const { dates, results } = weekStripData;
+  if(dates.length === 0) return;
+  const days = ['일','월','화','수','목','금','토'];
+  const today = todayStr();
+  $('#weekStrip').innerHTML = dates.map(date=>{
+    const d = new Date(date+'T00:00:00');
+    const info = results[date] || { qty:0, products:{} };
+    const productNames = Object.keys(info.products);
+    const cls = ['wk-cell'];
+    if(date === today) cls.push('today');
+    if(date === currentDate) cls.push('selected');
+
+    let badge = '';
+    if(info.qty > 0){
+      if(productNames.length === 1){
+        // 상품이 하나면 축약 이름+수량으로 (예: "사3")
+        badge = `<div class="wk-badge" title="${productNames[0]} ${info.qty}개 연기유입">${abbrevProduct(productNames[0])}${info.qty}</div>`;
+      } else {
+        // 여러 상품이면 합산 대신 "종류수/총수량"으로 (예: "↩2/5" = 2종류, 총 5개)
+        const titleTxt = productNames.map(p=>`${p} ${info.products[p]}개`).join(', ');
+        badge = `<div class="wk-badge" title="${titleTxt}">↩${productNames.length}/${info.qty}</div>`;
+      }
+    }
+
+    return `<div class="${cls.join(' ')}" data-date="${date}">
+      <div class="wk-dow">${days[d.getDay()]}</div>
+      <div class="wk-date">${d.getDate()}</div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+$('#weekStrip').addEventListener('click', (e)=>{
+  const cell = e.target.closest('.wk-cell');
+  if(!cell) return;
+  const date = cell.dataset.date;
+  if(date === currentDate) return;
+  currentDate = date;
+  $('#dateInput').value = date;
+  orders = [];
+  activeProductFilter = null;
+  statFilter = 'all';
+  render();
+  loadOrders();
+  renderWeekStrip();
+});
+
+// 상품 필터 바 클릭
+$('#prodBar').addEventListener('click', (e)=>{
+  const printBtn = e.target.closest('[data-act="printprod"]');
+  if(printBtn){
+    e.stopPropagation();
+    printProductList(printBtn.dataset.product);
+    return;
+  }
+  const chip = e.target.closest('.prodchip');
+  if(!chip) return;
+  const p = chip.dataset.product;
+  activeProductFilter = (activeProductFilter === p) ? null : p;
+  render();
+});
+
+$('#orderList').addEventListener('click', (e)=>{
+  // 전체보기(필터 해제) 배너 버튼
+  const clearBtn = e.target.closest('[data-act="clearfilter"]');
+  if(clearBtn){ activeProductFilter = null; render(); return; }
+
+  const btn = e.target.closest('[data-act]');
+  if(btn){
+    const act = btn.dataset.act;
+    const id = btn.dataset.id;
+    if(act === 'status'){
+      setItemStatus(id, btn.dataset.product, btn.dataset.status);
+      if($('#searchInput').value.trim()) searchClearOnFocus = true;
+      return;
+    }
+    if(act === 'delcomment'){ deleteComment(id, Number(btn.dataset.idx)); return; }
+    if(act === 'addcomment'){
+      const input = document.querySelector(`input[data-comment-for="${id}"]`);
+      if(input){ addComment(id, input.value); }
+      return;
+    }
+  }
+  const delBtn = e.target.closest('.del');
+  if(delBtn){ deleteOrder(delBtn.dataset.id); }
+});
+
+// 코멘트 입력창에서 Enter로 등록
+$('#orderList').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && e.target.matches('input[data-comment-for]')){
+    const id = e.target.getAttribute('data-comment-for');
+    addComment(id, e.target.value);
+  }
+});
+// 필터 배너도 orderList 밖(형제)이라 별도 위임 (배너는 orderList 앞에 삽입됨)
+document.addEventListener('click', (e)=>{
+  const cb = e.target.closest('#filterBanner [data-act="clearfilter"]');
+  if(cb){ activeProductFilter = null; render(); }
+});
+
+$('#backupBtn').addEventListener('click', ()=>{
+  const backup = {
+    type: 'bonjour-pickup-backup',
+    savedAt: new Date().toISOString(),
+    date: currentDate,
+    orders: orders,
+    noshowLog: noshowLog,
+    members: members,
+    history: history
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `봉주르픽업_백업_${currentDate}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 10000);
+  toast('백업 파일이 저장됐어요');
+});
+
+$('#restoreBtn').addEventListener('click', ()=>{
+  $('#restoreFile').click();
+});
+
+$('#restoreFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (ev)=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(data.type !== 'bonjour-pickup-backup' || !Array.isArray(data.orders)){
+        toast('올바른 백업 파일이 아니에요');
+        return;
+      }
+      if(data.date && data.date !== currentDate){
+        currentDate = data.date;
+        $('#dateInput').value = currentDate;
+      }
+      orders = data.orders;
+      if(Array.isArray(data.noshowLog)) noshowLog = data.noshowLog;
+      if(Array.isArray(data.members)) members = data.members;
+      if(data.history && typeof data.history === 'object') history = data.history;
+      lastLocalChange = Date.now();
+      await saveOrders();
+      await saveNoshow();
+      await saveMembers();
+      await saveHistory();
+      render();
+      renderNoshow();
+      renderMembers();
+      toast(`복원 완료: 주문 ${orders.length}건`);
+    }catch(err){
+      toast('복원 실패: 파일을 읽을 수 없어요');
+    }finally{
+      e.target.value = '';
+    }
+  };
+  reader.readAsText(file);
+});
+
+$('#printBtn').addEventListener('click', ()=>{
+  const q = $('#searchInput').value.trim();
+  const filtered = orders
+    .filter(o => orderMatches(o, q))
+    .slice()
+    .sort((a,b)=>displayName(a.name).localeCompare(displayName(b.name),'ko'));
+
+  if(filtered.length === 0){
+    toast('출력할 주문이 없어요');
+    return;
+  }
+
+  const products = [];
+  filtered.forEach(o=>Object.keys(o.items).forEach(p=>{ if(!products.includes(p)) products.push(p); }));
+
+  // 상품 칼럼 수가 많을수록 한 줄이 길어지므로 함께 고려해 1장 → 최대 3장 목표로 폰트 크기 자동 조정
+  const rows = filtered.length;
+  const complexity = rows * (1 + products.length * 0.15);
+  let sizeClass = 'print-lg';
+  if(complexity > 130) sizeClass = 'print-sm';
+  else if(complexity > 55) sizeClass = 'print-md';
+
+  const head = `<tr><th>No</th><th>고객명</th>${products.map(p=>`<th>${p}</th>`).join('')}<th>합계</th><th>비고</th></tr>`;
+  const bodyRows = filtered.map((o,i)=>{
+    const cells = products.map(p=>{
+      const it = o.items[p];
+      return `<td>${it ? it.qty : ''}</td>`;
+    }).join('');
+    const total = Object.values(o.items).reduce((s,it)=>s+it.qty, 0);
+    return `<tr><td>${i+1}</td><td class="pname">${displayName(o.name)}</td>${cells}<td>${total}</td><td>${o.note||''}</td></tr>`;
+  }).join('');
+
+  const doc = `<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8" />
+<title>봉주르후르츠 픽업 명단 ${currentDate}</title>
+<style>
+  @page{ size:A4 portrait; margin:12mm; }
+  body{ font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif; color:#1a1a1a; margin:0; padding:16px; }
+  .print-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
+  .print-header h1{font-size:18px;margin:0;font-weight:800;}
+  .print-header span{font-size:12px;color:#444;}
+  table{width:100%;border-collapse:collapse;}
+  thead{display:table-header-group;}
+  tr{page-break-inside:avoid;}
+  th,td{border:1px solid #888;text-align:center;}
+  td.pname{text-align:left;font-weight:700;}
+  .print-lg{font-size:13px;}
+  .print-lg th,.print-lg td{padding:6px 8px;}
+  .print-md{font-size:10.5px;}
+  .print-md th,.print-md td{padding:4px 6px;}
+  .print-sm{font-size:8.5px;}
+  .print-sm th,.print-sm td{padding:2px 4px;}
+  .hint{margin-top:14px;font-size:11px;color:#999;}
+  @media print{ .hint{ display:none; } }
+</style></head>
+<body>
+  <div class="print-header">
+    <h1>봉주르후르츠 픽업 명단</h1>
+    <span>${currentDate} · 총 ${filtered.length}명</span>
+  </div>
+  <table class="${sizeClass}">
+    <thead>${head}</thead>
+    <tbody>${bodyRows}</tbody>
+  </table>
+  <p class="hint">이 탭에서 자동으로 인쇄창이 뜨지 않으면 ⌘P(맥) 또는 Ctrl+P(윈도우)를 눌러주세요.</p>
+  <script>
+    window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 250); });
+  <\/script>
+</body></html>`;
+
+  const blob = new Blob([doc], { type:'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 30000);
+});
+
+/* ===== 상품별 명단 인쇄 (요청 스펙: A4 1장, 좌우 2단, 번호 이어짐, 수량 2개 이상 빨간 굵게) ===== */
+function printProductList(product){
+  const rows = orders
+    .filter(o => o.items[product] && st(o.items[product]) !== 'cancelled')
+    .map(o => ({ name: displayName(o.name), qty: o.items[product].qty }))
+    .sort((a,b) => a.name.localeCompare(b.name, 'ko'));
+
+  if(rows.length === 0){ toast('인쇄할 명단이 없어요'); return; }
+
+  const total = rows.length;
+  const totalQty = rows.reduce((s,r)=>s+r.qty, 0);
+  const half = Math.ceil(total / 2);
+  const leftRows = rows.slice(0, half);
+  const rightRows = rows.slice(half);
+
+  // 인원이 많을수록 한 장에 다 넣기 위해 글자/여백을 단계적으로 줄임
+  // (A4 인쇄 가능 영역 실측 기준으로 등급별 최대 인원을 계산해뒀음 — 여유분 포함)
+  let sizeClass = 'p-xl';
+  if(half > 65) sizeClass = 'p-4xs';       // ~최대 170명(85×2)까지
+  else if(half > 59) sizeClass = 'p-3xs';
+  else if(half > 52) sizeClass = 'p-xxs';
+  else if(half > 41) sizeClass = 'p-xs';
+  else if(half > 34) sizeClass = 'p-sm';
+  else if(half > 30) sizeClass = 'p-md';
+  else if(half > 25) sizeClass = 'p-lg';
+
+  const buildRows = (list, startNo) => list.map((r, i) => {
+    const no = startNo + i;
+    const hot = r.qty >= 2 ? ' class="qty hot"' : ' class="qty"';
+    return `<tr><td class="no">${no}</td><td class="name" title="${attr(r.name)}">${r.name}</td><td${hot}>${r.qty}</td></tr>`;
+  }).join('');
+
+  const buildTable = (list, startNo) => `
+    <table>
+      <thead><tr><th>#</th><th>고객 아이디</th><th>수량</th></tr></thead>
+      <tbody>${buildRows(list, startNo)}</tbody>
+    </table>`;
+
+  const doc = `<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8" />
+<title>${product} 주문 명단</title>
+<style>
+  @page{ size:A4 portrait; margin:12mm; }
+  *{box-sizing:border-box;}
+  body{
+    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    color:#1a1a1a;margin:0;padding:0;background:#fff;font-variant-numeric:tabular-nums;
+  }
+  .card{background:#fff;padding:6px;}
+  .brand{font-size:11px;color:#F81E00;font-weight:700;margin-bottom:3px;}
+  .header-row{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:9px;border-bottom:4px solid #3F8F5F;}
+  .title{font-size:23px;font-weight:800;margin:0;letter-spacing:-.01em;}
+  .summary{font-size:13px;color:#333;font-weight:700;white-space:nowrap;}
+  .notice{font-size:11.5px;color:#555;margin:9px 0 11px;line-height:1.5;}
+  .cols{display:flex;gap:16px;}
+  .col{flex:1;min-width:0;}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  thead tr{background:#E3F3E7;}
+  th{text-align:left;font-weight:700;border-bottom:2px solid #3F8F5F;color:#1f4a30;}
+  td{border-bottom:1px solid #ddd;}
+  td.no{text-align:center;color:#999;}
+  td.name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
+  td.qty{text-align:right;font-weight:700;}
+  td.qty.hot{color:#E8524A;font-weight:800;}
+  th:nth-child(1),td:nth-child(1){width:11%;}
+  th:nth-child(3),td:nth-child(3){width:20%;text-align:right;}
+
+  .p-xl{font-size:13px;} .p-xl th,.p-xl td{padding:6px 7px;}
+  .p-lg{font-size:11.5px;} .p-lg th,.p-lg td{padding:5px 6px;}
+  .p-md{font-size:10px;} .p-md th,.p-md td{padding:4px 5px;}
+  .p-sm{font-size:8.5px;} .p-sm th,.p-sm td{padding:3px 4px;}
+  .p-xs{font-size:7.5px;} .p-xs th,.p-xs td{padding:2px 3px;}
+  .p-xxs{font-size:6.5px;} .p-xxs th,.p-xxs td{padding:1.5px 2.5px;}
+  .p-3xs{font-size:5.8px;} .p-3xs th,.p-3xs td{padding:1px 2px;}
+  .p-4xs{font-size:5.2px;} .p-4xs th,.p-4xs td{padding:.6px 1.5px;}
+
+  .hint{margin-top:14px;font-size:11px;color:#999;}
+  @media print{ .hint{ display:none; } }
+</style></head>
+<body>
+  <div class="card">
+    <div class="brand">봉주르후르츠 공동구매</div>
+    <div class="header-row">
+      <h1 class="title">${product} 주문 명단</h1>
+      <span class="summary">총 ${total}명 · 총 ${totalQty}개</span>
+    </div>
+    <p class="notice">아이디와 수량을 확인해 주세요. 다르면 댓글이나 톡으로 알려주세요. 수량 2개는 붉은색입니다.</p>
+    <div class="cols ${sizeClass}">
+      <div class="col">${buildTable(leftRows, 1)}</div>
+      <div class="col">${buildTable(rightRows, half + 1)}</div>
+    </div>
+  </div>
+  <p class="hint">이 탭에서 자동으로 인쇄창이 뜨지 않으면 ⌘P(맥) 또는 Ctrl+P(윈도우)를 눌러주세요.</p>
+  <script>
+    window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 250); });
+  <\/script>
+</body></html>`;
+
+  const blob = new Blob([doc], { type:'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 30000);
+}
+
+function startPolling(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(()=>{
+    if(isLoadingOrders) return;                      // 로딩 중엔 건너뜀
+    if(isSavingOrders) return;                        // 저장 중엔 건너뜀 (변경사항 유실 방지)
+    if(saveInProgress) return;                        // 저장 대기/연속 저장 큐가 진행 중이어도 건너뜀
+                                                        // (loadOrders는 병합이 아니라 통째 교체라서, 이 상태에서
+                                                        //  끼어들면 아직 서버에 안 올라간 로컬 변경이 사라짐)
+    if(Date.now() - lastLocalChange < 1500) return;
+    // 코멘트 입력 중이면 이번 주기는 건너뜀 (입력 방해 방지)
+    const ae = document.activeElement;
+    if(ae && ae.matches && ae.matches('input[data-comment-for]')) return;
+    loadOrders();
+  }, 4000);
+}
+
+/* ===== 로그인 화면 ===== */
+function showLoginScreen(msg){
+  $('#loginScreen').style.display = 'flex';
+  $('.wrap').style.display = 'none';
+  $('#loginPassword').value = '';
+  if(msg){
+    $('#loginErr').textContent = msg;
+    $('#loginErr').style.display = 'block';
+  } else {
+    $('#loginErr').style.display = 'none';
+  }
+  setTimeout(()=>$('#loginPassword').focus(), 100);
+}
+
+function hideLoginScreen(){
+  $('#loginScreen').style.display = 'none';
+  $('.wrap').style.display = 'block';
+}
+
+async function doLogin(){
+  const pw = $('#loginPassword').value;
+  if(!pw){ $('#loginErr').textContent = '비밀번호를 입력해주세요'; $('#loginErr').style.display='block'; return; }
+  $('#loginBtn').disabled = true;
+  try{
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    if(!res.ok){
+      const data = await res.json().catch(()=>({}));
+      $('#loginErr').textContent = data.error || '로그인에 실패했어요';
+      $('#loginErr').style.display = 'block';
+      $('#loginBtn').disabled = false;
+      return;
+    }
+    const data = await res.json();
+    authToken = data.token;
+    try{ localStorage.setItem(AUTH_KEY, authToken); }catch(e){}
+    hideLoginScreen();
+    startApp();
+  }catch(e){
+    $('#loginErr').textContent = '서버에 연결할 수 없어요';
+    $('#loginErr').style.display = 'block';
+  }
+  $('#loginBtn').disabled = false;
+}
+
+$('#loginBtn').addEventListener('click', doLogin);
+$('#loginPassword').addEventListener('keydown', (e)=>{ if(e.key === 'Enter') doLogin(); });
+
+$('#logoutBtn').addEventListener('click', ()=>{
+  if(pollTimer) clearInterval(pollTimer);
+  forceLogout('');
+});
+
+async function startApp(){
+  await loadOrders();
+  await loadNoshow();
+  await loadMembers();
+  await loadHistory();
+  await loadCampaigns();
+  renderMembers();
+  render();
+  loadWeekPostponeSummary();
+  startPolling();
+}
+
+(function initAuthGate(){
+  if(authToken){
+    hideLoginScreen();
+    startApp();
+  } else {
+    showLoginScreen();
+  }
+})();
+</script>
+</body>
+</html>

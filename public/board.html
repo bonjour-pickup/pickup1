@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>봉주르후르츠 공동구매</title>
+
+<!-- 카카오톡 등에서 링크 공유 시 미리보기 카드용 (Open Graph) -->
+<!-- ⚠️ og:url / og:image의 도메인이 실제 배포 주소와 다르면 아래 3줄의 URL을 맞게 바꿔주세요 -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="봉주르후르츠" />
+<meta property="og:title" content="봉주르후르츠 공동구매" />
+<meta property="og:description" content="지금 주문 가능한 상품과 픽업 일정, 내 주문 상태를 바로 확인하세요" />
+<meta property="og:url" content="https://bonjour1.onrender.com/board" />
+<meta property="og:image" content="https://bonjour1.onrender.com/assets/og-board.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="theme-color" content="#2B2118" />
+<style>
+:root{
+  --board: oklch(27% 0.03 155);
+  --frame: oklch(28% 0.04 55);
+  --chalk: oklch(93% 0.015 90);
+  --chalk-dim: oklch(93% 0.015 90 / 0.55);
+  --chalk-yellow: oklch(87% 0.11 95);
+  --chalk-pink: oklch(78% 0.13 18);
+  --chalk-blue: oklch(80% 0.09 210);
+  --line: oklch(93% 0.015 90 / 0.22);
+  --coral: oklch(62% 0.21 25);
+  --coral-2: oklch(55% 0.22 24);
+  --teal: oklch(58% 0.1 185);
+  --teal-2: oklch(50% 0.095 185);
+  --gutter-mobile: 14px;   /* 모바일에서 모든 콘텐츠가 공유하는 좌우 여백 기준값 (내 주문 확인 박스와 동일) */
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;background:var(--frame);
+  font-family:-apple-system,'SF Pro Text','Pretendard','Apple SD Gothic Neo',sans-serif;
+  color:var(--chalk);
+  -webkit-tap-highlight-color:transparent;
+}
+.board-frame{padding:18px;min-height:100vh;}
+.board{
+  background:var(--board);border-radius:20px;padding:20px 20px 24px;
+  max-width:900px;margin:0 auto;
+}
+.top{padding:0 0 16px;border-bottom:2px solid var(--line);margin-bottom:16px;}
+.store-name{font-size:24px;font-weight:700;letter-spacing:-0.01em;}
+.today-date{font-size:13px;color:var(--chalk-dim);margin-top:4px;}
+
+.board-columns{display:flex;gap:20px;align-items:flex-start;}
+.col-left{flex:1;min-width:0;}
+.divider{width:2px;align-self:stretch;background:var(--line);}
+.col-right{flex:0.85;min-width:0;}
+
+.section{padding-top:20px;}
+.section:first-child{padding-top:0;}
+.section-title{
+  text-transform:uppercase;font-size:13px;font-weight:600;color:var(--chalk-dim);
+  display:flex;align-items:center;gap:8px;margin-bottom:14px;
+}
+.section-title .count{font-size:12px;opacity:.7;text-transform:none;}
+
+.card-list{display:flex;flex-direction:column;gap:10px;}
+.card-link{display:block;text-decoration:none;color:inherit;-webkit-tap-highlight-color:rgba(255,255,255,.08);}
+.card-link:active .product-card{opacity:.85;transform:scale(.99);}
+.product-card{
+  display:grid;grid-template-columns:76px 1fr;gap:14px;padding:14px;border-radius:16px;
+  background:oklch(32% 0.03 155);border:1px solid var(--line);
+}
+.product-card .thumb{
+  width:76px;height:76px;border-radius:14px;background:oklch(24% 0.02 155);
+  display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--chalk-dim);text-align:center;
+}
+.product-name{font-size:16px;font-weight:600;}
+.product-note{font-size:12px;color:var(--chalk-dim);margin-top:3px;line-height:1.4;}
+.product-card.urgent .product-note{color:rgba(255,255,255,.8);}
+.deadline-simple{margin-top:6px;}
+.dday-badge{
+  display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--chalk-blue);
+  color:var(--chalk-blue);font-size:14px;font-weight:700;padding:2px 10px;border-radius:20px;width:fit-content;
+}
+.qty-badge{
+  display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--chalk-yellow);
+  color:var(--chalk-yellow);font-size:14px;font-weight:700;padding:2px 10px;border-radius:20px;width:fit-content;
+  margin-top:6px;font-variant-numeric:tabular-nums;
+}
+.qty-bar{width:100%;max-width:140px;height:5px;border-radius:3px;background:rgba(255,255,255,.15);margin-top:6px;overflow:hidden;}
+.qty-bar-fill{height:100%;background:var(--chalk-yellow);border-radius:3px;}
+.product-card.urgent .qty-badge{border-color:#fff;color:#fff;}
+.product-card.pulse-hot .qty-bar-fill{background:#fff;}
+.product-card.urgent{
+  background:linear-gradient(135deg,var(--coral),var(--coral-2));color:#fff;border:none;
+}
+.info-row{display:flex;align-items:center;gap:10px;margin-top:6px;}
+.analog-clock{
+  width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.18);
+  border:1.5px solid #fff;position:relative;flex-shrink:0;
+}
+.analog-clock .hand{position:absolute;left:50%;top:50%;background:#fff;transform-origin:top center;border-radius:2px;}
+.analog-clock .hand.min{width:2px;height:13px;margin-left:-1px;opacity:.95;}
+.analog-clock .hand.sec{width:1px;height:15px;margin-left:-0.5px;opacity:.6;}
+.analog-clock .dot{position:absolute;left:50%;top:50%;width:4px;height:4px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);}
+.countdown-label{font-size:11px;font-weight:600;color:rgba(255,255,255,.85);}
+.countdown{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;}
+/* 펄스: 지금 주문 가능한 상품은 항상 은은하게(idle) 두근거리고, 임박(3시간 미만/수량 20% 미만)하면 강하게(hot) */
+@keyframes pulseIdle{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.88;transform:scale(1.015);}}
+@keyframes pulseHot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.65;transform:scale(1.08);}}
+.product-card.pulse-idle{animation:pulseIdle 2.2s ease-in-out infinite;}
+.product-card.pulse-hot{animation:pulseHot .6s ease-in-out infinite;background:linear-gradient(135deg,oklch(60% .22 22),oklch(52% .23 18));color:#fff;border:none;}
+.product-card.pulse-hot .dday-badge{border-color:#fff;color:#fff;}
+
+.pickup-today-list{display:flex;flex-direction:column;gap:10px;}
+.pickup-today{
+  display:grid;grid-template-columns:88px 1fr;gap:14px;align-items:center;padding:14px;border-radius:16px;
+  background:linear-gradient(135deg,var(--teal),var(--teal-2));color:#fff;
+}
+.pickup-today .thumb{
+  width:88px;height:88px;border-radius:14px;background:rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(255,255,255,.8);text-align:center;
+}
+.pickup-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:rgba(255,255,255,.85);}
+.pickup-name{font-size:18px;font-weight:700;margin-top:2px;}
+
+.cal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.cal-card{
+  border-radius:14px;padding:12px 6px;text-align:center;background:oklch(32% 0.03 155);
+  border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+}
+.cal-card .date{font-size:15px;font-weight:700;}
+.cal-card .dow-suffix{font-size:12px;font-weight:500;color:var(--chalk-dim);margin-left:2px;}
+.cal-card.today .dow-suffix{color:rgba(255,255,255,.85);}
+.cal-card .prod{
+  font-size:11px;font-weight:500;min-height:14px;color:var(--chalk-dim);
+  display:flex;flex-direction:column;gap:2px;align-items:center;
+}
+.cal-card .prod-line{
+  word-break:keep-all;overflow-wrap:break-word;line-height:1.3;
+  max-width:100%;
+}
+.cal-card.today{background:linear-gradient(135deg,var(--teal),var(--teal-2));border:none;}
+.cal-card.today .dow-suffix,.cal-card.today .prod{color:rgba(255,255,255,.85);}
+.cal-card.closed{background:oklch(30% 0.01 90);}
+.cal-card.today.closed{background:oklch(30% 0.01 90);border:1.5px solid var(--teal);}
+.cal-card.today.closed .dow-suffix,.cal-card.today.closed .prod{color:var(--chalk-dim);}
+
+.right-block{margin-bottom:20px;}
+.right-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;margin-bottom:10px;}
+.right-title.late{color:var(--chalk-yellow);}
+.right-title.absent{color:var(--chalk-pink);}
+.right-title .count{font-size:12px;opacity:.8;font-weight:600;}
+.chalk-list{list-style:none;margin:0;padding:0;max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
+.chalk-list li{
+  border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12.5px;
+  display:flex;flex-direction:column;gap:2px;
+}
+.chalk-list .cust-name{font-weight:700;}
+.chalk-list .cust-product{color:var(--chalk-dim);}
+.chalk-list .time-tag{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chalk-list.late li{border-color:var(--chalk-yellow);}
+.chalk-list.late .time-tag{color:var(--chalk-yellow);}
+.chalk-list.absent li{border-color:var(--chalk-pink);opacity:.85;}
+.chalk-list.absent .time-tag{color:var(--chalk-pink);}
+.chalk-list.compact{max-height:210px;}
+.chalk-list.tight{max-height:none;overflow:visible;gap:4px;}
+.chalk-list.tight li{padding:5px 8px;font-size:11px;}
+.right-block.tight-block{margin-bottom:10px;}
+.right-title.tight-title{font-size:12px;margin-bottom:5px;user-select:none;-webkit-tap-highlight-color:rgba(255,255,255,.1);}
+.right-title.tight-title:active{opacity:.7;}
+.chalk-list .cust-note{font-size:10.5px;color:var(--chalk-yellow);margin-top:2px;line-height:1.4;}
+.reservation-expand{max-height:340px;overflow-y:auto;margin-top:2px;}
+.reservation-expand::-webkit-scrollbar{width:5px;}
+.reservation-expand::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+
+.my-search{
+  margin:18px 0 24px;padding:16px 16px 14px;border-radius:18px;
+  background:linear-gradient(135deg, oklch(32% 0.035 155), oklch(28% 0.03 155));
+  border:1.5px solid var(--chalk-blue);
+  box-shadow:0 4px 16px rgba(0,0,0,.15);
+}
+.my-search-title{font-size:14.5px;font-weight:700;margin-bottom:10px;color:var(--chalk);}
+.my-search input{
+  width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;
+  font-size:16px;background:oklch(24% 0.02 155);color:var(--chalk);font-family:inherit;
+}
+.my-search input::placeholder{color:var(--chalk-dim);}
+.my-search input:focus{outline:none;border-color:var(--chalk-blue);}
+.my-search-results{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+.my-search-hint{font-size:11.5px;color:var(--chalk-dim);margin-top:6px;}
+.chalk-list::-webkit-scrollbar{width:5px;}
+.chalk-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+.empty-note{font-size:14px;color:var(--chalk-dim);padding:6px 2px;}
+
+.footer-note{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:18px;padding-top:12px;border-top:2px solid var(--line);}
+
+/* ===== 모바일 최적화 ===== */
+@media (max-width:640px){
+  .board-columns{flex-direction:column;align-items:stretch;}  /* flex-start면 폭이 콘텐츠 크기로 줄어드는 버그 방지 */
+  .divider{display:none;}
+  .store-name{font-size:20px;}
+}
+
+@media (max-width:480px){
+  .board-frame{padding:0;}                 /* 매장/화면 테두리 여백 제거 → 화면 꽉 채움 */
+  .board{
+    border-radius:0;max-width:none;
+    padding:16px var(--gutter-mobile) 20px; /* 이 좌우 여백이 모든 콘텐츠(검색창 포함)의 공통 기준 */
+    min-height:100vh;
+  }
+  .top{padding-bottom:12px;margin-bottom:14px;}
+  .store-name{font-size:18px;}
+  .today-date{font-size:12px;}
+
+  .section{padding-top:16px;}
+  .section-title{font-size:12px;margin-bottom:11px;}
+
+  /* 상품 카드: 썸네일을 살짝 줄여 텍스트 공간 확보 */
+  .product-card{grid-template-columns:60px 1fr;gap:10px;padding:12px;}
+  .product-card .thumb{width:60px;height:60px;font-size:9px;border-radius:12px;}
+  .product-name{font-size:14.5px;}
+  .countdown{font-size:17px;}
+  .countdown-label{font-size:10.5px;}
+  .analog-clock{width:32px;height:32px;}
+  .info-row{gap:8px;flex-wrap:wrap;}
+
+  .pickup-today{grid-template-columns:64px 1fr;gap:10px;padding:12px;}
+  .pickup-today .thumb{width:64px;height:64px;font-size:9px;}
+  .pickup-name{font-size:16px;}
+
+  /* 주간 픽업 일정: 3열이 좁으면 2열로 — 요일별 칸이 넉넉해져 상품명이 덜 답답함 */
+  .cal-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .cal-card{padding:10px 6px;}
+
+  .right-title.tight-title{padding:6px 0;min-height:24px;}  /* 터치 영역 확보 */
+  .chalk-list.tight li{padding:6px 9px;font-size:11.5px;}
+
+  /* 입력창 글자를 16px 미만으로 두면 iOS에서 탭할 때 화면이 확대돼서 16px로 고정 */
+  /* my-search는 좌우 margin 없이 .board의 공통 여백을 그대로 따름 (아래 콘텐츠들과 폭이 동일해짐) */
+  .my-search{margin:12px 0 18px;padding:13px 13px 12px;}
+  .my-search input{padding:11px 12px;}
+  .my-search-title{font-size:12.5px;}
+
+  .footer-note{font-size:11.5px;}
+}
+
+@media (max-width:360px){
+  :root{--gutter-mobile:11px;}
+  .cal-grid{grid-template-columns:repeat(2,1fr);gap:6px;}
+  .product-card{grid-template-columns:52px 1fr;}
+  .product-card .thumb{width:52px;height:52px;}
+  .countdown{font-size:16px;}
+}
+</style>
+</head>
+<body>
+<div class="board-frame">
+<div class="board">
+
+<header class="top">
+  <div class="store-name">봉주르후르츠 공동구매</div>
+  <div class="today-date" id="todayDate"></div>
+</header>
+
+<div class="my-search">
+  <div class="my-search-title">🔎 내 주문 확인</div>
+  <input id="mySearchInput" type="text" placeholder="이름으로 검색 (ㄱ, 가, 감, 1561)" autocomplete="off" />
+  <div id="mySearchResults" class="my-search-results"></div>
+</div>
+
+<div class="board-columns">
+<div class="col-left">
+
+<section class="section">
+  <div class="section-title">지금 주문 가능 <span class="count" id="orderableCount"></span></div>
+  <div class="card-list" id="orderableList"></div>
+</section>
+
+<section class="section">
+  <div class="section-title">오늘의 픽업 <span class="count" id="todayPickupCount"></span></div>
+  <div class="pickup-today-list" id="todayPickupList"></div>
+</section>
+
+<section class="section">
+  <div class="section-title">주간 픽업 일정</div>
+  <div class="cal-grid" id="calScroll"></div>
+</section>
+
+</div>
+
+<div class="divider"></div>
+
+<div class="col-right">
+  <div class="section-title" style="margin-bottom:16px;">상품별 예약자 명단</div>
+  <div id="reservationList"></div>
+</div>
+
+</div>
+
+<div class="footer-note">픽업 시간 및 장소는 매장 안내를 확인해주세요</div>
+
+</div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const todayStr = () => {
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+};
+
+const now = new Date();
+$('#todayDate').textContent = now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+
+// 실시간 아날로그 시계 (장식용, 실제 현재 시각)
+function runClock(el){
+  const min = el.querySelector('.hand.min');
+  const sec = el.querySelector('.hand.sec');
+  function tick(){
+    const d = new Date();
+    min.style.transform = `rotate(${d.getMinutes()*6 + d.getSeconds()*0.1}deg)`;
+    sec.style.transform = `rotate(${d.getSeconds()*6}deg)`;
+  }
+  tick();
+  setInterval(tick,1000);
+}
+
+// 마감 임박 기준: 오늘 안으로 마감이면 항상 촉박 모드(카운트다운)
+const DRAMATIC_TIME_MS = 3 * 60 * 60 * 1000;  // 시간 기준: 3시간 미만 남으면 펄스 효과를 더 격하게
+const DRAMATIC_QTY_RATIO = 0.2;                // 수량 기준: 남은 수량이 20% 미만이면 펄스 효과를 더 격하게
+
+function qtyRemaining(c){
+  const total = c.totalQty || 0;
+  const sold = c.soldQty || 0;
+  return Math.max(0, total - sold);
+}
+function isQtyDramatic(c){
+  const total = c.totalQty || 0;
+  if(total <= 0) return false;
+  return qtyRemaining(c) / total <= DRAMATIC_QTY_RATIO;
+}
+function isTimeDramatic(c){
+  if(!c.deadlineAt) return false;
+  return (new Date(c.deadlineAt).getTime() - Date.now()) <= DRAMATIC_TIME_MS;
+}
+function isDramatic(c){
+  return c.mode === 'qty' ? isQtyDramatic(c) : isTimeDramatic(c);
+}
+
+function isDeadlineToday(deadlineAt){
+  const d = new Date(deadlineAt);
+  const dateKey = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return dateKey === todayStr();
+}
+
+function fmtHMS(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  const h = String(Math.floor(s/3600)).padStart(2,'0');
+  const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const sec = String(s%60).padStart(2,'0');
+  return `${h}:${m}:${sec}`;
+}
+
+function ddayLabel(deadlineAt){
+  const diff = new Date(deadlineAt).getTime() - Date.now();
+  if(diff <= 0) return '마감';
+  const days = Math.floor(diff / 86400000);
+  if(days === 0) return '오늘마감';
+  return 'D-' + days;
+}
+
+let boardData = { campaigns:[], members:[], noshowLog:[], postponedLog:[], ordersByDate:{} };
+const countdownTimers = [];
+
+function clearCountdowns(){
+  countdownTimers.forEach(t=>clearTimeout(t));
+  countdownTimers.length = 0;
+}
+
+const KAKAO_OPENCHAT_URL = 'https://open.kakao.com/o/gwLUR3Xh';   // "지금 주문 가능" 카드를 누르면 이동할 오픈채팅 주소
+
+function renderOrderable(){
+  // 시간 기준: 마감 안 지난 것 / 수량 기준: 남은 수량이 있는 것
+  const active = boardData.campaigns.filter(c=>{
+    if(c.mode === 'qty') return qtyRemaining(c) > 0;
+    return c.deadlineAt && new Date(c.deadlineAt).getTime() > Date.now();
+  });
+  $('#orderableCount').textContent = active.length ? active.length : '';
+  const list = $('#orderableList');
+
+  if(active.length === 0){
+    list.innerHTML = '<div class="empty-note">지금 주문 가능한 상품이 없어요</div>';
+    return;
+  }
+
+  list.innerHTML = active.map((c,i)=>{
+    const thumb = c.imageUrl
+      ? `<img class="thumb" src="${c.imageUrl}" alt="${c.product}" style="object-fit:cover;" />`
+      : '<div class="thumb">상품 이미지</div>';
+    const noteHtml = c.note ? `<div class="product-note">${c.note}</div>` : '';
+    const pulseClass = isDramatic(c) ? 'pulse-hot' : 'pulse-idle';   // 지금 주문 가능한 상품은 전부 처음부터 펄스, 임박하면 더 격하게
+    const showCountdown = c.mode !== 'qty' && isDeadlineToday(c.deadlineAt);
+
+    if(showCountdown){
+      const remaining = new Date(c.deadlineAt).getTime() - Date.now();
+      return `
+      <a class="card-link" href="${KAKAO_OPENCHAT_URL}" target="_blank" rel="noopener">
+      <div class="product-card urgent ${pulseClass}" id="card${i}">
+        ${thumb}
+        <div class="info">
+          <div class="product-name">${c.product}</div>
+          ${noteHtml}
+          <div class="info-row">
+            <div class="analog-clock" id="clock${i}"><div class="hand min"></div><div class="hand sec"></div><div class="dot"></div></div>
+            <div class="countdown-wrap">
+              <div class="countdown-label">마감까지</div>
+              <div class="countdown" id="cd${i}">${fmtHMS(remaining)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </a>`;
+    }
+
+    let badgeHtml;
+    if(c.mode === 'qty'){
+      const total = c.totalQty || 0, sold = c.soldQty || 0;
+      const pct = total > 0 ? Math.min(100, Math.round(sold/total*100)) : 0;
+      badgeHtml = `
+        <div class="qty-badge">${sold}/${total}</div>
+        <div class="qty-bar"><div class="qty-bar-fill" style="width:${pct}%"></div></div>`;
+    } else {
+      badgeHtml = `<div class="deadline-simple"><span class="dday-badge">${ddayLabel(c.deadlineAt)}</span></div>`;
+    }
+
+    return `
+    <a class="card-link" href="${KAKAO_OPENCHAT_URL}" target="_blank" rel="noopener">
+    <div class="product-card ${pulseClass}" id="card${i}">
+      ${thumb}
+      <div class="info">
+        <div class="product-name">${c.product}</div>
+        ${noteHtml}
+        ${badgeHtml}
+      </div>
+    </div>
+    </a>`;
+  }).join('');
+
+  document.querySelectorAll('#orderableList .analog-clock').forEach(runClock);
+
+  // 시간 기준 + 오늘 마감인 상품만 매초 카운트다운(과 펄스 재판정)이 필요함
+  active.forEach((c,i)=>{
+    if(c.mode !== 'qty' && isDeadlineToday(c.deadlineAt)){
+      runCountdown(i, new Date(c.deadlineAt).getTime());
+    }
+  });
+}
+
+function runCountdown(i, targetMs){
+  const card = $('#card'+i);
+  const cd = $('#cd'+i);
+  if(!card || !cd) return;
+  function tick(){
+    const remaining = targetMs - Date.now();
+    cd.textContent = fmtHMS(remaining);
+    card.classList.remove('pulse-idle','pulse-hot');
+    card.classList.add(remaining <= DRAMATIC_TIME_MS ? 'pulse-hot' : 'pulse-idle');
+    if(remaining <= 0){ cd.textContent = '마감'; return; }
+    countdownTimers.push(setTimeout(tick, 1000));
+  }
+  tick();
+}
+
+const STATUS_LABEL = { noshow:'노쇼', postponed:'연기', picked:'수령완료', cancelled:'취소' };
+
+// 특정 날짜의 실제 주문에서, 해당 상품을 예약한 사람 중 '아직 안 온 사람'만 (취소·수령완료는 제외)
+function getProductReservers(product, date){
+  const list = (boardData.ordersByDate && boardData.ordersByDate[date]) || [];
+  const out = [];
+  list.forEach(o=>{
+    const it = o.items && o.items[product];
+    if(!it) return;
+    const status = it.status || (it.picked ? 'picked' : (it.cancelled ? 'cancelled' : 'none'));
+    if(status === 'cancelled' || status === 'picked') return;
+    out.push({ name:o.name, qty:it.qty, status, postponedTo: it.postponedTo || null, comments: o.comments || [] });
+  });
+  return out;
+}
+
+function statusTag(status, postponedTo){
+  if(status === 'postponed') return ` · 연기${postponedTo ? ' → '+fmtMD(postponedTo) : ''}`;
+  return STATUS_LABEL[status] ? ` · ${STATUS_LABEL[status]}` : '';
+}
+
+function commentsHtml(comments){
+  if(!comments || comments.length === 0) return '';
+  return `<div class="cust-note">💬 ${comments.map(c=>c.text).join(' · ')}</div>`;
+}
+
+function reserverListHtml(reservers){
+  if(reservers.length === 0){
+    return '<div class="empty-note" style="padding:4px 2px;">아직 예약자가 없어요</div>';
+  }
+  return `<ul class="chalk-list tight">${reservers.map(r=>{
+    return `<li><span class="cust-name">${r.name}</span><span class="cust-product">${r.qty}개${statusTag(r.status, r.postponedTo)}</span>${commentsHtml(r.comments)}</li>`;
+  }).join('')}</ul>`;
+}
+
+function renderTodayPickup(){
+  const today = todayStr();
+  const items = boardData.campaigns.filter(c => c.pickupDate === today);
+  $('#todayPickupCount').textContent = items.length ? items.length : '';
+  const list = $('#todayPickupList');
+  if(items.length === 0){
+    list.innerHTML = '<div class="empty-note">오늘 예정된 픽업이 없어요</div>';
+    return;
+  }
+  list.innerHTML = items.map(c=>`
+    <div class="pickup-today">
+      ${c.imageUrl ? `<img class="thumb" src="${c.imageUrl}" alt="${c.product}" style="object-fit:cover;" />` : '<div class="thumb">오늘의 픽업 이미지</div>'}
+      <div>
+        <div class="pickup-label">오늘의 픽업</div>
+        <div class="pickup-name">${c.product}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderWeekCalendar(){
+  const days = ['일','월','화','수','목','금','토'];
+  const cal = $('#calScroll');
+  cal.innerHTML = '';
+  for(let i=-1;i<=4;i++){
+    const d = new Date();
+    d.setDate(d.getDate()+i);
+    const dateKey = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const isSunday = d.getDay() === 0;
+    const prods = boardData.campaigns.filter(c=>c.pickupDate===dateKey).map(c=>c.product);
+    const card = document.createElement('div');
+    card.className = 'cal-card' + (i===0?' today':'') + (isSunday?' closed':'');
+    const prodHtml = isSunday
+      ? '<div class="prod-line">휴무</div>'
+      : prods.map(p=>`<div class="prod-line">${p}</div>`).join('');
+    card.innerHTML = `<div class="date">${d.getMonth()+1}/${d.getDate()}<span class="dow-suffix">(${days[d.getDay()]})</span></div><div class="prod">${prodHtml}</div>`;
+    cal.appendChild(card);
+  }
+}
+
+function fmtMD(dateStr){
+  if(!dateStr) return '';
+  const parts = dateStr.split('-');
+  return parts.length===3 ? `${Number(parts[1])}/${Number(parts[2])}` : dateStr;
+}
+
+let expandedProducts = new Set();  // 펼쳐진 상품 id 기억 (30초마다 다시 그려도 펼침 상태 유지)
+
+function renderReservationsByProduct(){
+  const el = $('#reservationList');
+  const today = todayStr();
+  const todayCampaigns = (boardData.campaigns || []).filter(c => c.pickupDate === today);
+  if(todayCampaigns.length === 0){
+    el.innerHTML = '<div class="empty-note">오늘 예정된 상품이 없어요</div>';
+    return;
+  }
+  el.innerHTML = todayCampaigns
+    .map(c=>{
+      const reservers = getProductReservers(c.product, today);
+      const isOpen = expandedProducts.has(c.id);
+      return `
+        <div class="right-block tight-block">
+          <div class="right-title tight-title reservation-toggle" data-camp="${c.id}" style="cursor:pointer;">
+            <span class="mark">${isOpen ? '▾' : '▸'}</span>${c.product} <span class="count">${reservers.length}명 미수령</span>
+          </div>
+          ${isOpen ? `<div class="reservation-expand">${reserverListHtml(reservers)}</div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+$('#reservationList').addEventListener('click', (e)=>{
+  const t = e.target.closest('.reservation-toggle');
+  if(!t) return;
+  const id = t.dataset.camp;
+  if(expandedProducts.has(id)) expandedProducts.delete(id);
+  else expandedProducts.add(id);
+  renderReservationsByProduct();
+});
+
+/* ===== 내 주문 확인 (고객 셀프 검색) — 관리 앱과 동일한 초성/자모 검색 + 회원명단 연동 ===== */
+const HG_CHO  = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const HG_JUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const HG_JONG = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+function toJamo(str){
+  let out = '';
+  for(const ch of (str||'')){
+    const code = ch.charCodeAt(0);
+    if(code >= 0xAC00 && code <= 0xD7A3){
+      const i = code - 0xAC00;
+      out += HG_CHO[Math.floor(i/588)];
+      out += HG_JUNG[Math.floor((i%588)/28)];
+      const j = HG_JONG[i%28];
+      if(j) out += j;
+    } else out += ch.toLowerCase();
+  }
+  return out;
+}
+function toChosung(str){
+  let out = '';
+  for(const ch of (str||'')){
+    const c = ch.charCodeAt(0);
+    if(c >= 0xAC00 && c <= 0xD7A3) out += HG_CHO[Math.floor((c-0xAC00)/588)];
+    else out += ch.toLowerCase();
+  }
+  return out;
+}
+function isAllChosung(q){ return q.length > 0 && [...q].every(ch => HG_CHO.includes(ch)); }
+function normName(s){ return (s||'').replace(/\s+/g,'').toLowerCase(); }
+
+function fuzzyMatchText(target, query){
+  const q = (query||'').trim();
+  if(!q || !target) return false;
+  if(isAllChosung(q) && toChosung(target).includes(q)) return true;
+  const qj = toJamo(q);
+  return toJamo(target).includes(qj) || String(target).includes(q);
+}
+
+// "김철수 1234" 같은 주문자명을 이름/번호로 분해 (관리 앱과 동일한 규칙)
+function parseNameLine(line){
+  let s = (line||'').trim();
+  if(!s) return null;
+  let m = s.match(/^(.+?)\s*[\(\[]\s*(\d{4})\s*[\)\]]\s*$/);
+  if(m) return { name: m[1].trim(), phone4: m[2] };
+  m = s.match(/^(.+?)[\s\/\-_,·|]+(\d{4})\s*$/);
+  if(m) return { name: m[1].trim(), phone4: m[2] };
+  m = s.match(/^(.+?)(\d{4})\s*$/);
+  if(m && m[1].trim().length > 0) return { name: m[1].trim(), phone4: m[2] };
+  return { name: s, phone4: null };
+}
+
+// 회원명단에서 검색어와 맞는 회원 찾기 (닉네임이 바뀌었어도 이전 이름/번호로 매칭)
+function findMemberMatches(query){
+  return (boardData.members || []).filter(m=>{
+    const targets = [m.name].concat(m.aliases||[]);
+    if(m.phone4) targets.push(m.phone4);
+    return targets.some(t => fuzzyMatchText(t, query));
+  });
+}
+
+function renderMySearchResults(query){
+  const el = $('#mySearchResults');
+  const q = (query||'').trim();
+  if(!q){ el.innerHTML = ''; return; }
+
+  const today = todayStr();
+  const todayOrders = (boardData.ordersByDate && boardData.ordersByDate[today]) || [];
+  const matchedMembers = findMemberMatches(q);
+
+  const rows = [];
+  todayOrders.forEach(o=>{
+    const parsed = parseNameLine(o.name) || { name:o.name, phone4:null };
+    // 이름 부분(번호 제외)에 대한 매칭 + 검색어가 번호 4자리와 정확히 같을 때만 번호로도 인정
+    // (원문 전체를 "포함되는지"로 검사하면, 상관없는 사람의 번호가 우연히 같아서 섞여 나올 수 있음)
+    const nameMatch = fuzzyMatchText(parsed.name, q);
+    const exactPhoneMatch = !!(parsed.phone4 && parsed.phone4 === q);
+
+    // 이름(또는 이전 이름)이 일치하는 회원만 인정 — 번호 뒷자리가 겹치는 건 흔해서
+    // 이름이 다르면 절대 같은 사람으로 보지 않음 (동명이인은 번호가 다르면 제외)
+    const matchedMember = matchedMembers.find(m=>{
+      const nameMatches = normName(m.name)===normName(parsed.name) || (m.aliases||[]).some(a=>normName(a)===normName(parsed.name));
+      if(!nameMatches) return false;
+      if(m.phone4 && parsed.phone4 && m.phone4 !== parsed.phone4) return false;
+      return true;
+    });
+
+    if(!nameMatch && !exactPhoneMatch && !matchedMember) return;
+    const displayNm = matchedMember ? matchedMember.name : o.name;
+
+    Object.entries(o.items||{}).forEach(([p,it])=>{
+      const status = it.status || (it.picked?'picked':(it.cancelled?'cancelled':'none'));
+      if(status === 'cancelled') return;
+      rows.push({ name:displayNm, product:p, qty:it.qty, status, postponedTo: it.postponedTo||null, comments:o.comments||[] });
+    });
+  });
+
+  if(rows.length === 0){
+    el.innerHTML = '<div class="empty-note">오늘 주문 내역을 찾지 못했어요</div>';
+    return;
+  }
+  el.innerHTML = rows.map(r=>{
+    const tag = r.status === 'none' ? ' · 미수령' : statusTag(r.status, r.postponedTo);
+    return `<div class="chalk-list tight" style="display:block;"><div style="border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;">
+      <span class="cust-name">${r.name}</span> · <span class="cust-product">${r.product} ${r.qty}개${tag}</span>
+      ${commentsHtml(r.comments)}
+    </div></div>`;
+  }).join('');
+}
+
+let mySearchTimer = null;
+$('#mySearchInput').addEventListener('input', (e)=>{
+  clearTimeout(mySearchTimer);
+  const val = e.target.value;
+  mySearchTimer = setTimeout(()=>renderMySearchResults(val), 150);
+});
+
+function renderAll(){
+  clearCountdowns();
+  renderOrderable();
+  renderTodayPickup();
+  renderWeekCalendar();
+  renderReservationsByProduct();
+  const q = $('#mySearchInput') ? $('#mySearchInput').value : '';
+  if(q && q.trim()) renderMySearchResults(q);
+}
+
+async function loadBoard(){
+  try{
+    const res = await fetch('/api/public/board?today=' + encodeURIComponent(todayStr()), { cache: 'no-store' });
+    if(!res.ok) throw new Error('load failed');
+    boardData = await res.json();
+  }catch(e){
+    // 실패해도 이전 데이터 유지, 다음 주기에 재시도
+  }
+  renderAll();
+}
+
+loadBoard();
+setInterval(loadBoard, 30000); // 30초마다 최신 데이터로 갱신
+</script>
+</body>
+</html>
