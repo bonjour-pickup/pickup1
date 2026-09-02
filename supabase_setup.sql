@@ -1,4 +1,5 @@
--- 봉주르후르츠 픽업앱 데이터 저장용 테이블
+-- 봉주르후르츠 목동 13단지점 픽업앱 데이터 저장용 테이블
+-- (본점과는 완전히 별도인 새 Supabase 프로젝트에서 실행하세요)
 -- Supabase 대시보드 → SQL Editor 에 이 내용을 붙여넣고 "Run" 하세요.
 
 create table if not exists public.kv_store (

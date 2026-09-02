@@ -350,5 +350,5 @@ app.put('/api/restore', requireAuth, async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`봉주르후르츠 픽업 서버 실행 중 (Supabase): http://localhost:${PORT}`);
+  console.log(`봉주르후르츠 목동13단지 픽업 서버 실행 중 (Supabase): http://localhost:${PORT}`);
 });
