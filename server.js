@@ -73,7 +73,15 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res) => {
+    // 정적 파일(HTML/이미지 포함)도 캐시되면, 새로 배포해도 예전 화면이 그대로 보일 수 있어서 항상 최신을 받도록 함
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.set('Pragma', 'no-cache');
+  }
+}));
 
 // POST /api/login  body: { password }
 app.post('/api/login', (req, res) => {
@@ -310,11 +318,13 @@ app.get('/api/public/my-order', async (req, res) => {
 
 // 고객용 "내 주문 확인" 전용 페이지 (로그인 없이 바로 접속)
 app.get('/my-order', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
   res.sendFile(path.join(__dirname, 'public', 'my-order.html'));
 });
 
 // 매장 태블릿/모니터용 화면 (로그인 없이 바로 접속)
 app.get('/board', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
   res.sendFile(path.join(__dirname, 'public', 'board.html'));
 });
 
