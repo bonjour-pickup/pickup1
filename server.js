@@ -257,9 +257,9 @@ app.get('/api/public/my-order', async (req, res) => {
       return targets.some(t => fuzzyMatchText(t, q));
     });
 
-    // 검색 범위: 오늘 ~ +7일 (UTC 기준 계산으로 서버 시간대 영향 없이 안전하게)
+    // 검색 범위: 오늘 -7일 ~ +7일 (UTC 기준 계산으로 서버 시간대 영향 없이 안전하게)
     const dates = [];
-    for (let i = 0; i <= 7; i++) {
+    for (let i = -7; i <= 7; i++) {
       const d = new Date(today + 'T00:00:00Z');
       d.setUTCDate(d.getUTCDate() + i);
       dates.push(d.toISOString().slice(0, 10));
@@ -298,6 +298,8 @@ app.get('/api/public/my-order', async (req, res) => {
         Object.entries(o.items || {}).forEach(([product, it]) => {
           const status = it.status || (it.picked ? 'picked' : (it.cancelled ? 'cancelled' : 'none'));
           if (status === 'cancelled') return;
+          // 과거(오늘 이전)는 미수령/노쇼만 노출
+          if (date < today && status !== 'none' && status !== 'noshow') return;
           results.push({
             date, name: displayNm, phone4: parsed.phone4 || null, product, qty: it.qty, status,
             postponedTo: it.postponedTo || null,

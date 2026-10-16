@@ -154,6 +154,13 @@ h1{margin:0;font-size:34px;line-height:1.1;letter-spacing:-.028em;font-weight:70
   display:flex;gap:6px;font-size:12.5px;line-height:1.45;letter-spacing:-.008em;
 }
 
+.missed-card{margin-top:28px;border-radius:16px;background:rgba(255,59,48,.08);border:1px solid rgba(255,59,48,.25);padding:16px 16px 6px;}
+.missed-title{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;letter-spacing:-.02em;color:#C9261C;}
+.missed-msg{margin:8px 0 12px;font-size:14px;line-height:1.55;letter-spacing:-.012em;color:#1C1C1E;}
+.missed-msg b{font-weight:700;color:#C9261C;}
+.missed-date{display:flex;align-items:baseline;gap:6px;margin:10px 0 4px;font-size:13px;font-weight:600;color:#8E8E93;}
+.missed-card .group-card{background:#fff;}
+.missed-note{padding:0 0 12px;}
 footer{margin-top:36px;}
 .footnote{margin:14px 4px 0;font-size:11.5px;line-height:1.5;letter-spacing:-.005em;color:#AEAEB2;}
 </style>
@@ -165,7 +172,7 @@ footer{margin-top:36px;}
   <header>
     <div class="brand"><span>🍑</span><span>봉주르후르츠 목동13단지</span></div>
     <h1>내 주문 확인</h1>
-    <p class="subcopy">이름만 입력하면 오늘부터 7일 뒤까지의 예약을 확인할 수 있어요.</p>
+    <p class="subcopy">이름만 입력하면 오늘 기준 전후 7일간의 예약을 확인할 수 있어요.</p>
   </header>
 
   <div id="installBanner" class="install-banner" style="display:none;">
@@ -186,7 +193,7 @@ footer{margin-top:36px;}
     </div>
     <div class="hints">
       <p>이름을 다 안 써도 돼요 — 초성이나 전화번호 뒷자리로도 찾을 수 있어요</p>
-      <p>오늘부터 7일 뒤까지의 예약만 나와요</p>
+      <p>오늘 기준 앞뒤 7일간의 예약만 나와요</p>
     </div>
   </section>
 
@@ -273,41 +280,54 @@ function renderEmpty(query){
     <div class="state-center">
       <div class="empty-icon">🧐</div>
       <p class="state-title">'${query}' 예약을 찾지 못했어요</p>
-      <p class="state-body">초성(ㄱ)이나 전화번호 뒷자리로 다시 검색해 보세요. 7일 이후 예약은 표시되지 않아요.</p>
+      <p class="state-body">초성(ㄱ)이나 전화번호 뒷자리로 다시 검색해 보세요. 전후 7일 밖의 예약은 표시되지 않아요.</p>
     </div>`;
 }
 
-function renderResults(results){
-  const today = todayStr();
-  const groups = {};
-  const order = [];
-  results.forEach(r=>{
+function josaEulReul(word){
+  const ch = (word||'').trim().slice(-1);
+  const c = ch.charCodeAt(0);
+  if(c >= 0xAC00 && c <= 0xD7A3) return ((c-0xAC00)%28)===0 ? '를' : '을';
+  return '을(를)';
+}
+
+function rowHtml(r){
+  const meta = r.phone4 ? `${r.name} · ${r.phone4}` : r.name;
+  return `
+  <div class="item-row">
+    <div class="item-top">
+      <div class="item-left">
+        <div class="item-meta">${meta}</div>
+        <div class="item-product-row">
+          <span class="item-product">${r.product}</span>
+          <span class="item-qty">${r.qty}개</span>
+        </div>
+      </div>
+      ${badgeHtml(r.status)}
+    </div>
+    ${noteHtml(r)}
+  </div>`;
+}
+
+function groupByDate(list){
+  const groups = {}, order = [];
+  list.forEach(r=>{
     if(!groups[r.date]){ groups[r.date] = []; order.push(r.date); }
     groups[r.date].push(r);
   });
   order.sort();
+  return { groups, order };
+}
 
-  const groupsHtml = order.map(date=>{
-    const items = groups[date];
+function renderResults(results){
+  const today = todayStr();
+  const upcoming = results.filter(r => r.date >= today);
+  const missed = results.filter(r => r.date < today && (r.status === 'none' || r.status === 'noshow'));
+  const up = groupByDate(upcoming);
+
+  const groupsHtml = up.order.map(date=>{
+    const items = up.groups[date];
     const isToday = date === today;
-    const rows = items.map(r=>{
-      const meta = r.phone4 ? `${r.name} · ${r.phone4}` : r.name;
-      return `
-      <div class="item-row">
-        <div class="item-top">
-          <div class="item-left">
-            <div class="item-meta">${meta}</div>
-            <div class="item-product-row">
-              <span class="item-product">${r.product}</span>
-              <span class="item-qty">${r.qty}개</span>
-            </div>
-          </div>
-          ${badgeHtml(r.status)}
-        </div>
-        ${noteHtml(r)}
-      </div>`;
-    }).join('');
-
     return `
     <section class="date-section">
       <div class="date-header">
@@ -317,17 +337,43 @@ function renderResults(results){
         <span class="spacer"></span>
         <span class="cnt">${items.length}건</span>
       </div>
-      <div class="group-card">${rows}</div>
+      <div class="group-card">${items.map(rowHtml).join('')}</div>
     </section>`;
   }).join('');
 
-  $('#resultArea').innerHTML = `
-    <div class="results-wrap">
+  const upcomingHtml = upcoming.length ? `
       <div class="summary-row">
         <span class="left">예약 내역</span>
-        <span class="right">${results.length}건 · ${order.length}일</span>
+        <span class="right">${upcoming.length}건 · ${up.order.length}일</span>
       </div>
-      ${groupsHtml}
+      ${groupsHtml}` : `
+      <div class="state-center" style="padding:24px 0 0;">
+        <p class="state-body">오늘 이후 예약은 없어요.</p>
+      </div>`;
+
+  let missedHtml = '';
+  if(missed.length){
+    const names = [];
+    missed.forEach(r=>{ if(names.indexOf(r.product) < 0) names.push(r.product); });
+    const last = names[names.length-1];
+    const list = names.join(', ');
+    const ms = groupByDate(missed);
+    const msGroups = ms.order.map(date=>`
+      <div class="missed-date"><span>${fmtMD(date)}</span><span>${fmtWeekday(date)}</span></div>
+      <div class="group-card">${ms.groups[date].map(rowHtml).join('')}</div>`).join('');
+    missedHtml = `
+      <section class="missed-card">
+        <div class="missed-title"><span>⚠️</span><span>아직 수령하지 않은 예약이 있어요</span></div>
+        <p class="missed-msg">예약하신 상품 <b>${list}</b>${josaEulReul(last)} 아직 수령하지 않으셨어요. 예약 상품은 미리 준비해 둔 물량이라, 가능한 한 빨리 수령해 주세요.</p>
+        ${msGroups}
+        <div class="missed-note"></div>
+      </section>`;
+  }
+
+  $('#resultArea').innerHTML = `
+    <div class="results-wrap">
+      ${upcomingHtml}
+      ${missedHtml}
     </div>`;
 }
 

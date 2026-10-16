@@ -3521,17 +3521,6 @@ function printProductList(product){
   const leftRows = rows.slice(0, half);
   const rightRows = rows.slice(half);
 
-  // 인원이 많을수록 한 장에 다 넣기 위해 글자/여백을 단계적으로 줄임
-  // (A4 인쇄 가능 영역 실측 기준으로 등급별 최대 인원을 계산해뒀음 — 여유분 포함)
-  let sizeClass = 'p-xl';
-  if(half > 65) sizeClass = 'p-4xs';       // ~최대 170명(85×2)까지
-  else if(half > 59) sizeClass = 'p-3xs';
-  else if(half > 52) sizeClass = 'p-xxs';
-  else if(half > 41) sizeClass = 'p-xs';
-  else if(half > 34) sizeClass = 'p-sm';
-  else if(half > 30) sizeClass = 'p-md';
-  else if(half > 25) sizeClass = 'p-lg';
-
   const buildRows = (list, startNo) => list.map((r, i) => {
     const no = startNo + i;
     const hot = r.qty >= 2 ? ' class="qty hot"' : ' class="qty"';
@@ -3550,17 +3539,21 @@ function printProductList(product){
 <style>
   @page{ size:A4 portrait; margin:12mm; }
   *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#fff;}
   body{
     font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
-    color:#1a1a1a;margin:0;padding:0;background:#fff;font-variant-numeric:tabular-nums;
+    color:#1a1a1a;font-variant-numeric:tabular-nums;
   }
-  .card{background:#fff;padding:6px;}
+  /* 인쇄 가능 영역(A4 - 여백12mm) 폭에 카드 폭을 고정 — 이 폭은 절대 안 바뀜(줄바꿈 안정성) */
+  .card{background:#fff;padding:6px;width:186mm;margin:0 auto;}
   .brand{font-size:11px;color:#F81E00;font-weight:700;margin-bottom:3px;}
   .header-row{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:9px;border-bottom:4px solid #3F8F5F;}
-  .title{font-size:23px;font-weight:800;margin:0;letter-spacing:-.01em;}
+  .title{font-size:23px;font-weight:800;margin:0;letter-spacing:-.01em;white-space:nowrap;}
   .summary{font-size:13px;color:#333;font-weight:700;white-space:nowrap;}
   .notice{font-size:11.5px;color:#555;margin:9px 0 11px;line-height:1.5;}
   .cols{display:flex;gap:16px;}
+  .cols th{font-size:11.5px;padding:5px 6px;}
+  .cols td{font-size:11.5px;padding:5px 6px;}
   .col{flex:1;min-width:0;}
   table{width:100%;border-collapse:collapse;table-layout:fixed;}
   thead tr{background:#E3F3E7;}
@@ -3573,34 +3566,66 @@ function printProductList(product){
   th:nth-child(1),td:nth-child(1){width:11%;}
   th:nth-child(3),td:nth-child(3){width:20%;text-align:right;}
 
-  .p-xl{font-size:13px;} .p-xl th,.p-xl td{padding:6px 7px;}
-  .p-lg{font-size:11.5px;} .p-lg th,.p-lg td{padding:5px 6px;}
-  .p-md{font-size:10px;} .p-md th,.p-md td{padding:4px 5px;}
-  .p-sm{font-size:8.5px;} .p-sm th,.p-sm td{padding:3px 4px;}
-  .p-xs{font-size:7.5px;} .p-xs th,.p-xs td{padding:2px 3px;}
-  .p-xxs{font-size:6.5px;} .p-xxs th,.p-xxs td{padding:1.5px 2.5px;}
-  .p-3xs{font-size:5.8px;} .p-3xs th,.p-3xs td{padding:1px 2px;}
-  .p-4xs{font-size:5.2px;} .p-4xs th,.p-4xs td{padding:.6px 1.5px;}
-
-  .hint{margin-top:14px;font-size:11px;color:#999;}
+  .hint{margin-top:14px;font-size:11px;color:#999;text-align:center;}
   @media print{ .hint{ display:none; } }
 </style></head>
 <body>
-  <div class="card">
+  <div class="card" id="printCard">
     <div class="brand">봉주르후르츠 목동13단지 공동구매</div>
     <div class="header-row">
       <h1 class="title">${product} 주문 명단</h1>
       <span class="summary">총 ${total}명 · 총 ${totalQty}개</span>
     </div>
     <p class="notice">아이디와 수량을 확인해 주세요. 다르면 댓글이나 톡으로 알려주세요. 수량 2개는 붉은색입니다.</p>
-    <div class="cols ${sizeClass}">
+    <div class="cols" id="printCols">
       <div class="col">${buildTable(leftRows, 1)}</div>
       <div class="col">${buildTable(rightRows, half + 1)}</div>
     </div>
   </div>
   <p class="hint">이 탭에서 자동으로 인쇄창이 뜨지 않으면 ⌘P(맥) 또는 Ctrl+P(윈도우)를 눌러주세요.</p>
   <script>
-    window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 250); });
+    // 인원 수에 상관없이 A4 한 장을 항상 꽉 채우도록, 표 글자크기/여백만 실측 기반으로 배율 조정
+    // (가로폭은 절대 안 건드림 — 줄바꿈이 틀어지면 높이 계산 자체가 어긋나기 때문)
+    window.addEventListener('load', function(){
+      var mmToPx = 96 / 25.4;
+      var targetH = 273 * mmToPx;   // 인쇄 가능 세로 길이(A4 297mm - 상하 여백 24mm)
+      var card = document.getElementById('printCard');
+      var cols = document.getElementById('printCols');
+      var oneRow = cols.querySelector('tbody tr');
+      var thead = cols.querySelector('thead');
+      if(!oneRow){ setTimeout(function(){ window.print(); }, 250); return; }
+
+      var cardH = card.getBoundingClientRect().height;
+      var colsH = cols.getBoundingClientRect().height;
+      var fixedOverhead = cardH - colsH;              // 브랜드+제목줄+안내문 등, 표 이외 영역
+      var rowH = oneRow.getBoundingClientRect().height;
+      var theadH = thead.getBoundingClientRect().height;
+      var rowsPerCol = ${half};
+
+      var availableForRows = targetH * 0.88 - fixedOverhead - theadH;  // 안전 여유 12% (절대 넘치지 않는 것을 최우선)
+      var idealRowH = availableForRows / rowsPerCol;
+      var rawScale = idealRowH / rowH;
+
+      var baseFontSize = 11.5, basePadV = 5, basePadH = 6;
+      var fontScale = Math.max(0.32, Math.min(rawScale, 2.0));   // 글자는 이 범위 안에서만 키움/줄임
+      var newFontSize = baseFontSize * fontScale;
+      var padV = basePadV * fontScale;
+      var padH = basePadH * fontScale;
+
+      // 글자 크기가 상한/하한에 걸려서 목표 행높이에 못 미치면, 그 차이만큼 세로 여백만 추가로 채움
+      // (행 테두리선 1px는 배율에 안 따라가는 고정값이라, 이를 빼고 계산해야 다인원일 때 오차가 안 쌓임)
+      var estimatedRowH = (rowH - 1) * fontScale + 1;
+      var shortfall = idealRowH - estimatedRowH;
+      if(shortfall > 0) padV += shortfall / 2;
+      padV = Math.min(padV, 60);   // 인원이 극소수일 때 여백이 비정상적으로 커지는 것 방지
+
+      cols.style.fontSize = '';   // th는 고정 크기 유지, td만 아래에서 별도로 조정
+      var styleTag = document.createElement('style');
+      styleTag.textContent = '#printCols td{ font-size: ' + newFontSize + 'px; padding: ' + padV + 'px ' + padH + 'px; }';
+      document.head.appendChild(styleTag);
+
+      setTimeout(function(){ window.print(); }, 250);
+    });
   <\/script>
 </body></html>`;
 
