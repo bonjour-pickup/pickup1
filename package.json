@@ -1,0 +1,16 @@
+{
+  "name": "bonjour-pickup",
+  "version": "2.0.0",
+  "private": true,
+  "description": "봉주르후르츠 직원 공유용 픽업 체크 앱 (Supabase 저장)",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "@supabase/supabase-js": "^2.110.7"
+  }
+}
